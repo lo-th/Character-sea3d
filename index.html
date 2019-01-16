@@ -17,7 +17,7 @@ body {
 </style>
 
 <!-- three -->
-<script src="./js/three.min.js"></script>
+<script src="./js/three.js"></script>
 <script src="./js/controls/OrbitControls.js"></script>
 <!-- sea3d -->
 <script src="./js/loaders/sea3d/SEA3D.js"></script>
@@ -27,7 +27,6 @@ body {
 <!-- bvh -->
 <script src="./js/loaders/BVHLoader.js"></script>
 <!-- lth -->
-<script src="./js/lth/OrbitControlsExtra.js"></script>
 <script src="./js/lth/BVHLoader_Add.js"></script>
 <script src="./js/lth/Skeleton_Add.js"></script>
 
@@ -35,7 +34,7 @@ body {
 <body>
 <script>
 
-var camera, scene, renderer, controler, textureLoader, ground;
+var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader;
 var meshs = {};
 
 init();
@@ -44,6 +43,8 @@ addGroundAndLight();
 loadModel();
 
 function init() {
+
+	clock = new THREE.Clock();
 
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
@@ -69,9 +70,6 @@ function init() {
 	controler = new THREE.OrbitControls( camera, renderer.domElement );
 	controler.target.set( 0, 40, 0 );
     controler.screenSpacePanning = true;
-    controler.enableDamping = true;
-    controler.dampingFactor = 0.1;
-    controler.rotateSpeed = 0.1;
     controler.update();
 
 	window.addEventListener( 'resize', resize, false );
@@ -91,7 +89,8 @@ function resize() {
 function animate() {
 
 	requestAnimationFrame( animate );
-	controler.update();
+	var delta = clock.getDelta();
+	THREE.SEA3D.AnimationHandler.update( delta );
 	renderer.render( scene, camera );
 
 }
@@ -101,7 +100,7 @@ function addGroundAndLight () {
 	var ambient = new THREE.HemisphereLight( 0x601010, 0xDDEEFF, 0.1 );
 	scene.add( ambient );
 
-	var light = new THREE.DirectionalLight( 0xffffff, 0.6 );
+	var light = new THREE.DirectionalLight( 0xffffff, 1 );
     light.position.set( 50, 300, 200 );
     
     light.shadow = new THREE.LightShadow( new THREE.OrthographicCamera( 300, -300, 300, -300,  100, 600 ) );
@@ -147,17 +146,44 @@ function loadModel () {
 		envmap.mapping = THREE.SphericalReflectionMapping;
 
 		// make texture
-		meshs.armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true });
-		meshs.body.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
-		meshs.head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
-		meshs.head_plus.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false });
-
+		meshs.Armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true });
+		meshs.Body.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
+		meshs.Head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
+		meshs.Head_plus.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false });
 
 		ground.visible = true;
+
+		initBVH();
 
 	};
 
 	loader.load( './assets/models/matti.sea' );
+
+}
+
+function initBVH () {
+
+	bvhLoader = new THREE.BVHLoader();
+	bvhLoader.addModel( meshs.Armature );
+
+	// set skeleton reference, only meshs.Armature have animation
+	meshs.Body.skeleton.setReference( meshs.Armature.skeleton );
+	meshs.Head.skeleton.setReference( meshs.Armature.skeleton );
+	meshs.Head_plus.skeleton.setReference( meshs.Armature.skeleton );
+
+	bvhLoader.load( "./assets/bvh/idle.bvh", function ( result ) { result.name = "idle"; addAnimation( result ); } )
+
+}
+
+function addAnimation( result ) {
+
+    result.clip.name = result.name;
+    var seq =  [];
+    var pos = new THREE.Vector3( 0, 0 ,0 );
+
+    bvhLoader.applyToModel( meshs.Armature, result, seq, pos );
+
+    meshs.Armature.play( result.name );
 
 }
 

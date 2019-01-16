@@ -1,7 +1,10 @@
-/**
-* @author lth / https://github.com/lo-th
+/**   _  _____ _   _   
+*    | ||_   _| |_| |
+*    | |_ | | |  _  |
+*    |___||_| |_| |_|
+*    @author lo.th / https://github.com/lo-th
 *
-* Description: reads BVH files and outputs a single THREE.Skeleton and an THREE.AnimationClip
+*    Description: reads BVH files and outputs a single THREE.Skeleton and an THREE.AnimationClip
 *
 */
 
@@ -210,8 +213,9 @@ THREE.BVHLoader.prototype.addModel = function( model, options ){
 
         // get id of parent bones
         if( b.parent ) b.userData['id'] = bones.indexOf( b.parent );
+        else  b.userData['id'] = -1;
 
-        if( options !== undefined ) this.renameBone( b, options.names );
+        //if( options !== undefined ) this.renameBone( b, options.names );
 
         n = -1;
         if( b.name === 'rThigh' ) n = 1;
@@ -219,14 +223,14 @@ THREE.BVHLoader.prototype.addModel = function( model, options ){
         if( b.name === 'rFoot' ) n = 3; 
         if( n!==-1 ) p[n] = b.getWorldPosition( v.clone() )
 
-
-
         pose.push( b.matrixWorld.clone() );
 
     }
 
     this.tPose[name] = pose;
     this.sizes[name] = p[1].distanceTo( p[2] ) + p[2].distanceTo( p[3] );
+
+
 
 };
 
@@ -275,7 +279,7 @@ THREE.BVHLoader.prototype.applyToModel = function ( model, result, seq, Pos ) {
     var globalPos = new THREE.Vector3();
     var globalMtx = new THREE.Matrix4();
     var localMtx = new THREE.Matrix4();
-    var parentMtx;
+    var parentMtx = new THREE.Matrix4();
     
     var resultQuat = new THREE.Quaternion();
     var resultPos = new THREE.Vector3();
@@ -382,6 +386,9 @@ THREE.BVHLoader.prototype.applyToModel = function ( model, result, seq, Pos ) {
 
                 //parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
                 parentMtx = bone.parent ? tPose[ bone.userData.id ] : matrixWorldInv;
+               // parentMtx = bone.userData.id ? tPose[ bone.userData.id ] : matrixWorldInv;
+
+                //console.log( bone.parent.name, name )
 
                 // rotation
 

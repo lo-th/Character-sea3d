@@ -1,9 +1,18 @@
+/**   _  _____ _   _   
+*    | ||_   _| |_| |
+*    | |_ | | |  _  |
+*    |___||_| |_| |_|
+*    @author lo.th / https://github.com/lo-th
+*
+* Description: add reference skeleton and scalling
+*
+*/
 
 //-----------------------
 // skeleton referency
 //-----------------------
 
-THREE.Skeleton.prototype.setReference = function ( ref, debug ) {
+THREE.Skeleton.prototype.setReference = function ( ref ) {
 
     this.reference_skeleton = ref;
 
@@ -21,22 +30,12 @@ THREE.Skeleton.prototype.setReference = function ( ref, debug ) {
             if( name === ref.bones[j].name ){ 
 
             	bone.userData.idr = j;
-                //if( ref.bones[j].scalling ) bone.scalling = ref.bones[j].scalling; 
 
-
-                //if(debug) console.log(name, j)
-            	//
-            	//bone.matrixWorld = ref.bones[j].matrixWorld;
-            	//bone.matrixAutoUpdate = false;
             }
 
         }
 
-
-
     }
-
-     //if(debug)console.log(this.reference_skeleton)
 
 }
 
@@ -52,15 +51,10 @@ THREE.Skeleton.prototype.update = ( function () {
     var mtx = new THREE.Matrix4();
     var tmtx = new THREE.Matrix4();
 
-    //var p1 = new THREE.Vector3();
-    //var p2 = new THREE.Vector3();
-
     var p = new THREE.Vector3();
     var s = new THREE.Vector3();
     var q = new THREE.Quaternion();
     var q2 = new THREE.Quaternion();
-
-    
 
     return function update() {
 
@@ -100,29 +94,12 @@ THREE.Skeleton.prototype.update = ( function () {
                 if( bone.userData.isKinematic ){
 
                     mtx
-                    //.multiplyMatrices( bone.parent.matrixWorld, m.userData.decal )
                     .multiplyMatrices( bone.matrixWorld, m.userData.decal )
                     .decompose( p, q, s );
 
                     m.userData.matrix = [ m.name, p.toArray(), q.toArray() ];
 
                 } else {
-
-                	/*tmtx
-                    .copy( m.matrixWorld )
-                    .decompose( p, q, s )
-                    .compose( p, q, s.set( 1, 1, 1 ) )
-                    .multiply( m.userData.decalinv );
-
-                    mtx
-                    .getInverse( bone.parent.matrixWorld )
-                    .multiply( tmtx )
-                    .decompose( p, q, s );
-
-                    q.normalize();
-
-                    bone.position.copy(p);
-                    bone.quaternion.copy(q);*/
 
                     mtx
                     .copy( m.matrixWorld )
@@ -166,10 +143,6 @@ THREE.Skeleton.prototype.update = ( function () {
                 }
 
             }
-
-
-
-            
 
             // default
           
