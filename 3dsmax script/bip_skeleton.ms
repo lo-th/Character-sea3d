@@ -393,8 +393,6 @@ fn RunCharacter =
 fn ApplyFullSkin =
 (
 
-	clearLayer("_SKELETON_export")
-
 	reflayer = LayerManager.getLayerFromName "_SEA_bones"
 
 	if reflayer != undefined then (
