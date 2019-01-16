@@ -7,58 +7,80 @@
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=11" />
 <meta http-equiv="Pragma" content="no-cache">
+
 <style>
 body { 
-
     margin: 0; padding: 0; border: 0;
-    font-family: Consolas, Monaco, monospace;
-    font-size: 12px; 
+    background: #808080;
     color:#FFF;
-    background: #232323; 
 }
-
 </style>
 
+<!-- three -->
 <script src="./js/three.min.js"></script>
+<script src="./js/controls/OrbitControls.js"></script>
+<!-- sea3d -->
+<script src="./js/loaders/sea3d/SEA3D.js"></script>
+<script src="./js/loaders/sea3d/SEA3DLoader.js"></script>
+<script src="./js/loaders/sea3d/SEA3DLZMA.js"></script>
+<script src="./js/loaders/sea3d/SEA3DLegacy.js"></script>
+<!-- bvh -->
+<script src="./js/loaders/BVHLoader.js"></script>
+<!-- lth -->
+<script src="./js/lth/OrbitControlsExtra.js"></script>
+<script src="./js/lth/BVHLoader_Add.js"></script>
+<script src="./js/lth/Skeleton_Add.js"></script>
 
 </head>
 <body>
 <script>
 
-var camera, scene, renderer;
-var mesh;
+var camera, scene, renderer, controler, textureLoader, ground;
+var meshs = {};
 
 init();
 animate();
+addGroundAndLight();
+loadModel();
 
 function init() {
-
-	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-	camera.position.z = 400;
-
-	scene = new THREE.Scene();
-
-	var texture = new THREE.TextureLoader().load( './assets/textures/head.jpg' );
-
-	var geometry = new THREE.BoxBufferGeometry( 200, 200, 200 );
-	var material = new THREE.MeshBasicMaterial( { map: texture } );
-
-	mesh = new THREE.Mesh( geometry, material );
-	scene.add( mesh );
 
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.shadowMap.enabled = true;
+    renderer.shadowMap.soft = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor( 0x808080, 1 );
+
+    renderer.gammaInput = true;
+    renderer.gammaOutput = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+
 	document.body.appendChild( renderer.domElement );
 	renderer.domElement.style.position = "absolute";
 
-	//
+	scene = new THREE.Scene();
 
-	window.addEventListener( 'resize', onResize, false );
+	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
+	camera.position.set(0,60,200);
+
+	controler = new THREE.OrbitControls( camera, renderer.domElement );
+	controler.target.set( 0, 40, 0 );
+    controler.screenSpacePanning = true;
+    controler.enableDamping = true;
+    controler.dampingFactor = 0.1;
+    controler.rotateSpeed = 0.1;
+    controler.update();
+
+	window.addEventListener( 'resize', resize, false );
+
+	textureLoader = new THREE.TextureLoader();
 
 }
 
-function onResize() {
+function resize() {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
@@ -69,13 +91,80 @@ function onResize() {
 function animate() {
 
 	requestAnimationFrame( animate );
-
-	mesh.rotation.x += 0.005;
-	mesh.rotation.y += 0.01;
-
+	controler.update();
 	renderer.render( scene, camera );
 
 }
+
+function addGroundAndLight () {
+
+	var ambient = new THREE.HemisphereLight( 0x301010, 0xDDEEFF, 1 );
+	scene.add( ambient );
+
+
+	var light = new THREE.DirectionalLight( 0xffffff, 1 );
+    light.position.set(50,300,200);
+    light.castShadow = true;
+    var d = 400;
+    light.shadow = new THREE.LightShadow( new THREE.OrthographicCamera( d, -d, d, -d,  100, 600 ) );
+    light.shadow.mapSize.width = light.shadow.mapSize.height = 2048;
+        
+    light.shadow.bias = 0;
+    light.shadow.radius = 4;
+    scene.add( light );
+
+	var groundMaterial = new THREE.ShadowMaterial({ opacity:0.3, depthTest:true, depthWrite:false });
+	ground = new THREE.Mesh( new THREE.PlaneBufferGeometry( 3000, 3000, 1, 1 ), groundMaterial );
+    ground.geometry.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
+    ground.castShadow = false;
+    ground.receiveShadow = true;
+    scene.add( ground );
+
+    ground.visible = false;
+
+}
+
+function loadTexture ( url, flip ) {
+
+	var texture = textureLoader.load( url );
+	if( flip !== undefined ) texture.flipY = flip;
+	return texture;
+
+}
+
+function loadModel () {
+
+	var loader = new THREE.SEA3D()
+	loader.onComplete = function () {
+
+		var i = loader.meshes.length, m;
+		while( i-- ){
+
+			m = loader.meshes[i];
+			meshs[ m.name ] = m;
+			scene.add( m );
+
+		}
+
+		var envmap = loadTexture( './assets/textures/envmap.jpg' );
+		envmap.mapping = THREE.SphericalReflectionMapping;
+
+		// make texture
+		meshs.armature.material = new THREE.MeshBasicMaterial({wireframe:true, skinning:true });
+		meshs.body.material = new THREE.MeshStandardMaterial({map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65 });
+		meshs.head.material = new THREE.MeshStandardMaterial({map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65 });
+		meshs.head_plus.material = new THREE.MeshStandardMaterial({map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, envMap:envmap, metalness:0.8, roughness:0.2 });
+
+
+		ground.visible = true;
+
+	};
+
+	loader.load( './assets/models/matti.sea' );
+
+}
+
+
 
 
 </script>
