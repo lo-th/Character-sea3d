@@ -399,6 +399,8 @@ THREE.BVHLoader.prototype = {
 
 		var bones = readBvh( lines );
 
+		bones[ 0 ].offset.set(0,0,0);
+
 		var threeBones = [];
 		toTHREEBone( bones[ 0 ], threeBones );
 
