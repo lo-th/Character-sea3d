@@ -64,7 +64,7 @@ function init() {
 	scene = new THREE.Scene();
 
 	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
-	camera.position.set(0,60,200);
+	camera.position.set( 0, 60, 160 );
 
 	controler = new THREE.OrbitControls( camera, renderer.domElement );
 	controler.target.set( 0, 40, 0 );
@@ -98,19 +98,17 @@ function animate() {
 
 function addGroundAndLight () {
 
-	var ambient = new THREE.HemisphereLight( 0x301010, 0xDDEEFF, 1 );
+	var ambient = new THREE.HemisphereLight( 0x601010, 0xDDEEFF, 0.1 );
 	scene.add( ambient );
 
-
-	var light = new THREE.DirectionalLight( 0xffffff, 1 );
-    light.position.set(50,300,200);
+	var light = new THREE.DirectionalLight( 0xffffff, 0.6 );
+    light.position.set( 50, 300, 200 );
+    
+    light.shadow = new THREE.LightShadow( new THREE.OrthographicCamera( 300, -300, 300, -300,  100, 600 ) );
+    light.shadow.mapSize.width = light.shadow.mapSize.height = 2048;    
+    light.shadow.bias = 0.001;
+    light.shadow.radius = 2;
     light.castShadow = true;
-    var d = 400;
-    light.shadow = new THREE.LightShadow( new THREE.OrthographicCamera( d, -d, d, -d,  100, 600 ) );
-    light.shadow.mapSize.width = light.shadow.mapSize.height = 2048;
-        
-    light.shadow.bias = 0;
-    light.shadow.radius = 4;
     scene.add( light );
 
 	var groundMaterial = new THREE.ShadowMaterial({ opacity:0.3, depthTest:true, depthWrite:false });
@@ -118,9 +116,8 @@ function addGroundAndLight () {
     ground.geometry.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
     ground.castShadow = false;
     ground.receiveShadow = true;
-    scene.add( ground );
-
     ground.visible = false;
+    scene.add( ground );
 
 }
 
@@ -150,10 +147,10 @@ function loadModel () {
 		envmap.mapping = THREE.SphericalReflectionMapping;
 
 		// make texture
-		meshs.armature.material = new THREE.MeshBasicMaterial({wireframe:true, skinning:true });
-		meshs.body.material = new THREE.MeshStandardMaterial({map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65 });
-		meshs.head.material = new THREE.MeshStandardMaterial({map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65 });
-		meshs.head_plus.material = new THREE.MeshStandardMaterial({map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, envMap:envmap, metalness:0.8, roughness:0.2 });
+		meshs.armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true });
+		meshs.body.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
+		meshs.head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
+		meshs.head_plus.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false });
 
 
 		ground.visible = true;
@@ -163,9 +160,6 @@ function loadModel () {
 	loader.load( './assets/models/matti.sea' );
 
 }
-
-
-
 
 </script>
 </body>
