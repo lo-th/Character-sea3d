@@ -131,28 +131,43 @@ fn CreateBone NewName Parent BoneColor PosStart PosEnd Rot rotlocalx Lookat1Targ
 
 	) else (
 
-	    boneN = MakeDummy NewName BoneColor PosStart
+	    boneN = BoneSys.createBone PosStart PosEnd Rot
+
+	    --boneN = MakeDummy NewName BoneColor PosStart
 
 	    --boneN = dummy name:NewName boxsize:[1,1,1] pos:PosStart
 	    boneN.showLinks = true
 	    boneN.showLinksOnly = true
 	    --boneN.wirecolor = BoneColor
-	    boneN.parent = Parent
+	    
+	    --boneN.lookat = Parent
+	    --boneN.transform.row3 = Rot
 	    --move boneN PosStart
-	    rotate boneN (EulerAngles Rot.x Rot.y Rot.z)
+	    --toDeg = 57.295779513082320876
+	    --rotate boneN (EulerAngles (Rot.x*toDeg) (Rot.y*toDeg) (Rot.z*toDeg))
+	    --rotate boneN (EulerAngles Rot.x Rot.y Rot.z)
 		--boneN.Length = 1
-		in coordsys local rotate boneN (EulerAngles rotlocalx -90 -90)
+		in coordsys local rotate boneN (EulerAngles 0 -90 -90)
 		if CURENT == 1 then ( 
 			in coordsys local rotate boneN (angleaxis 90 [0,0,1])
 			in coordsys local rotate boneN (angleaxis 180 [1,0,0])
+			if NewName == "lHand" then (in coordsys local rotate boneN (angleaxis 90 [1,0,0]))
 		)
 		if CURENT == 2 then (
 			in coordsys local rotate boneN (angleaxis -90 [0,0,1])
 			in coordsys local rotate boneN (angleaxis 180 [1,0,0])
+			if NewName == "rHand" then (in coordsys local rotate boneN (angleaxis 90 [1,0,0]))
 		)
 		if CURENT == 3 then ( 
+
 			in coordsys local rotate boneN (angleaxis 180 [0,0,1])
+			if NewName == "lToes" then (in coordsys local rotate boneN (angleaxis 90 [1,0,0]))
+			if NewName == "rToes" then (in coordsys local rotate boneN (angleaxis 90 [1,0,0]))
 		)
+
+		--boneN.parent = Parent
+
+		setBoneProps boneN Parent NewName 1 1 1 false 2 0 0 false 2 0 0 false 2 0 0 #Scale false 0 BoneColor
 
 	)
 
@@ -364,9 +379,11 @@ fn CreateCharacter =
 	if Biped_ctrl.arms then
 	(
 		CURENT = 1
-		if BVH == false then (CreateHand #lArm #lfingers B Biped_ctrl LHandNm LFingNm TSuffix chl cl LastSpine 0 0 0 -90 -90) else (CreateHand #lArm #lfingers B Biped_ctrl LHandNm LFingNm TSuffix chl cl LastSpine 0 0 0 0 0)
+		CreateHand #lArm #lfingers B Biped_ctrl LHandNm LFingNm TSuffix chl cl LastSpine 0 0 0 -90 -90
+		--if BVH == false then (CreateHand #lArm #lfingers B Biped_ctrl LHandNm LFingNm TSuffix chl cl LastSpine 0 0 0 -90 -90) else (CreateHand #lArm #lfingers B Biped_ctrl LHandNm LFingNm TSuffix chl cl LastSpine 0 0 0 0 0)
 		CURENT = 2
-		if BVH == false then (CreateHand #rArm #rfingers B Biped_ctrl RHandNm RFingNm TSuffix chr cr LastSpine 0 0 0 90 90) else (CreateHand #rArm #rfingers B Biped_ctrl RHandNm RFingNm TSuffix chr cr LastSpine 0 0 0 0 0)
+		CreateHand #rArm #rfingers B Biped_ctrl RHandNm RFingNm TSuffix chr cr LastSpine 0 0 0 90 90
+		--if BVH == false then (CreateHand #rArm #rfingers B Biped_ctrl RHandNm RFingNm TSuffix chr cr LastSpine 0 0 0 90 90) else (CreateHand #rArm #rfingers B Biped_ctrl RHandNm RFingNm TSuffix chr cr LastSpine 0 0 0 0 0)
 	)
 	"legs"
 	CURENT = 3
