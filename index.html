@@ -154,8 +154,10 @@ function loadModel () {
 		// make texture
 		meshs.Armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true });
 		meshs.Body.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
-		meshs.Head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
-		meshs.Head_plus.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false });
+		meshs.Head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, morphTargets:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
+		meshs.Head_plus.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, morphTargets:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false });
+
+		meshs.Head.setWeight( "smile_open", 1 );
 
 		ground.visible = true;
 
