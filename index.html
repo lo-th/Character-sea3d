@@ -29,12 +29,12 @@ body {
 <!-- lth -->
 <script src="./js/lth/BVHLoader_Add.js"></script>
 <script src="./js/lth/Skeleton_Add.js"></script>
-
+<script src="./js/lth/Eyes.js"></script>
 </head>
 <body>
 <script>
 
-var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader;
+var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader, eyes;
 var meshs = {};
 
 init();
@@ -155,9 +155,21 @@ function loadModel () {
 		meshs.Armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true });
 		meshs.Body.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
 		meshs.Head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, morphTargets:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
-		meshs.Head_plus.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head_plus.jpg', false ), skinning:true, morphTargets:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false });
+		meshs.Head_plus.material = new THREE.MeshStandardMaterial({ 
+			map:loadTexture( './assets/textures/head_plus.jpg', false ),
+			alphaMap:loadTexture( './assets/textures/head_plus_m.jpg', false ), 
+			skinning:true, morphTargets:true, envMap:envmap, metalness:0.8, roughness:0.2, shadowSide:false 
+		});
+
+		meshs.Head_plus.material.onBeforeCompile = function ( shader ) {
+			var fragment = shader.fragmentShader;
+			fragment = fragment.replace( '#include <dithering_fragment>', ['float RR = diffuseColor.a;', 'if ( RR < 0.5 ) { discard; }', ''].join("\n") );
+			shader.fragmentShader = fragment;
+		}
 
 		meshs.Head.setWeight( "smile_open", 1 );
+
+		addEyes();
 
 		ground.visible = true;
 
@@ -178,6 +190,7 @@ function initBVH () {
 	meshs.Body.skeleton.setReference( meshs.Armature.skeleton );
 	meshs.Head.skeleton.setReference( meshs.Armature.skeleton );
 	meshs.Head_plus.skeleton.setReference( meshs.Armature.skeleton );
+
 
 	bvhLoader.load( "./assets/bvh/ClubDance.bvh", function ( result ) { result.name = "ClubDance"; addAnimation( result ); } )
 
@@ -220,6 +233,27 @@ function dropAnimation( e ){
         addAnimation( result );
 
     };
+
+}
+
+function addEyes () {
+
+	eyes = new Eyes();
+	scene.add(eyes);
+	attachToBone(eyes, 'head');
+
+}
+
+function attachToBone( mesh, boneName ){
+
+	var bones = meshs.Armature.skeleton.bones, b;
+	for(var i = 0, lng = bones.length; i < lng; i++ ){
+		b = bones[i];
+		if( b.name === boneName ){
+			mesh.matrix = b.matrixWorld;
+			mesh.matrixAutoUpdate = false;
+		}
+	}
 
 }
 
