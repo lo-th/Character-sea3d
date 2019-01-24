@@ -244,7 +244,8 @@ function initBVH () {
 	meshs.Head.skeleton.setReference( meshs.Armature.skeleton );
 	meshs.Head_plus.skeleton.setReference( meshs.Armature.skeleton );
 
-	bvhLoader.load( "./assets/bvh/idle.bvh", function ( result ) { result.name = "idle"; addAnimation( result ); } )
+	//bvhLoader.load( "./assets/bvh/idle.bvh", function ( result ) { result.name = "idle"; addAnimation( result ); } )
+	bvhLoader.load( "./assets/bvh/ClubDance.bvh", function ( result ) { result.name = "ClubDance"; addAnimation( result ); } )
 
 }
 
@@ -256,7 +257,7 @@ function addAnimation ( result ) {
 
     bvhLoader.applyToModel( meshs.Armature, result, seq, pos );
 
-    //meshs.Armature.play( result.name );
+    meshs.Armature.play( result.name );
 
 }
 
