@@ -107,7 +107,7 @@ THREE.Skeleton.prototype.update = ( function () {
                     .compose( p, q, s.set( 1, 1, 1 ) )
                     .multiply( m.userData.decal );
 
-                    matrix.copy(mtx)
+                    matrix.copy( mtx );
 
                     if ( bone.parent && bone.parent.isBone ) {
 

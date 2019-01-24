@@ -194,22 +194,32 @@ THREE.BVHLoader.prototype.findSize = function( target, source ){
 
 };
 
-THREE.BVHLoader.prototype.addModel = function( model, options ){
+THREE.BVHLoader.prototype.addModel = function( model, offsets, options ){
 
     if( this.tPose === undefined ) this.tPose = {};
     if( this.sizes === undefined ) this.sizes = {};
 
     var name = model.name;
     var bones = model.skeleton.bones;
-    var lng = bones.length, i, b, n;
+    var lng = bones.length, i, b, n, o, m;
     var v = new THREE.Vector3();
     var pose = [], p = [];
+    var tmpOffsets = {};
+
+    if( offsets !== undefined ){
+
+        for( i = 0; i < offsets.length; i++ ){
+
+            o = offsets[i];
+            tmpOffsets[ o[0] ] = new THREE.Matrix4().makeRotationFromEuler( new THREE.Euler( THREE.Math.degToRad( o[1] ), THREE.Math.degToRad( o[2] ), THREE.Math.degToRad( o[3] ) ) );
+
+        }
+
+    }
 
     for( i = 0; i < lng; i++ ){ 
 
         b = bones[ i ];
-
-
 
         // get id of parent bones
         if( b.parent ) b.userData['id'] = bones.indexOf( b.parent );
@@ -221,16 +231,24 @@ THREE.BVHLoader.prototype.addModel = function( model, options ){
         if( b.name === 'rThigh' ) n = 1;
         if( b.name === 'rShin' ) n = 2;
         if( b.name === 'rFoot' ) n = 3; 
-        if( n!==-1 ) p[n] = b.getWorldPosition( v.clone() )
+        if( n!==-1 ) p[n] = b.getWorldPosition( v.clone() );
 
-        pose.push( b.matrixWorld.clone() );
+       if( tmpOffsets[ b.name ] ){ 
+
+            b.matrix.multiply( tmpOffsets[ b.name ] );
+            b.matrix.decompose( b.position, b.quaternion, b.scale );
+            b.updateMatrixWorld();
+
+        }
+
+        m = b.matrixWorld.clone();
+
+        pose.push( m );
 
     }
 
     this.tPose[name] = pose;
     this.sizes[name] = p[1].distanceTo( p[2] ) + p[2].distanceTo( p[3] );
-
-
 
 };
 

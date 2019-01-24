@@ -13,6 +13,10 @@ body {
     margin: 0; padding: 0; border: 0;
     background: #808080;
     color:#FFF;
+    background: url("./assets/textures/bg.jpg") no-repeat center center fixed;;
+    background-size: cover;
+    background-size: 100% 100%;
+    overflow: hidden;
 }
 </style>
 
@@ -35,7 +39,10 @@ body {
 <script>
 
 var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader, eyes;
+var count1 = 0;
+var nextBlink = THREE.Math.randInt(200,600); 
 var meshs = {};
+var isMorph = false;
 
 init();
 animate();
@@ -46,13 +53,13 @@ function init() {
 
 	clock = new THREE.Clock();
 
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer = new THREE.WebGLRenderer( { antialias: true, alpha:true } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.shadowMap.enabled = true;
     renderer.shadowMap.soft = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor( 0x808080, 1 );
+    renderer.setClearColor( 0x606060, 0 );
 
     renderer.gammaInput = true;
     renderer.gammaOutput = true;
@@ -83,7 +90,7 @@ function init() {
 
 }
 
-function resize() {
+function resize ( e ) {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
@@ -91,12 +98,36 @@ function resize() {
 
 }
 
-function animate() {
+function animate () {
 
 	requestAnimationFrame( animate );
 	var delta = clock.getDelta();
-	THREE.SEA3D.AnimationHandler.update( delta );
+	characterUpdate( delta );
 	renderer.render( scene, camera );
+
+}
+
+function characterUpdate ( delta ) {
+
+	// update animation
+	THREE.SEA3D.AnimationHandler.update( delta );
+
+	if(!isMorph) return;
+
+    // blink
+    var n = 0;
+    count1++;
+
+	if( count1 > nextBlink ){
+		
+		if(count1<(nextBlink+10)) n = ( count1-nextBlink ) / 10;
+		else n = 1 - ( count1-(nextBlink+10) ) / 10; 
+		meshs.Head.setWeight('blink', n );
+		if( count1>(nextBlink+20) ){ 
+			count1 = 0;
+			nextBlink = THREE.Math.randInt(200,600); 
+		}
+	}
 
 }
 
@@ -152,9 +183,19 @@ function loadModel () {
 		envmap.mapping = THREE.SphericalReflectionMapping;
 
 		// make texture
-		meshs.Armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true });
-		meshs.Body.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/body.jpg', false ), skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
-		meshs.Head.material = new THREE.MeshStandardMaterial({ map:loadTexture( './assets/textures/head.jpg', false ), skinning:true, morphTargets:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false });
+		meshs.Armature.material = new THREE.MeshBasicMaterial({ wireframe:true, skinning:true, transparent:true, opacity:0.2, color:0x000000 });
+		
+		meshs.Body.material = meshs.Sling.material = meshs.Shoes.material = new THREE.MeshStandardMaterial({ 
+			map:loadTexture( './assets/textures/body.jpg', false ),
+			normalMap:loadTexture( './assets/textures/body_n.jpg', false ),
+			skinning:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false 
+		});
+
+		meshs.Head.material = new THREE.MeshStandardMaterial({ 
+			map:loadTexture( './assets/textures/head.jpg', false ), 
+			skinning:true, morphTargets:true, envMap:envmap, metalness:0.5, roughness:0.65, shadowSide:false 
+		});
+
 		meshs.Head_plus.material = new THREE.MeshStandardMaterial({ 
 			map:loadTexture( './assets/textures/head_plus.jpg', false ),
 			alphaMap:loadTexture( './assets/textures/head_plus_m.jpg', false ), 
@@ -168,6 +209,7 @@ function loadModel () {
 		}
 
 		meshs.Head.setWeight( "smile_open", 1 );
+		isMorph = true;
 
 		addEyes();
 
@@ -184,19 +226,29 @@ function loadModel () {
 function initBVH () {
 
 	bvhLoader = new THREE.BVHLoader();
-	bvhLoader.addModel( meshs.Armature );
+	var offsets = [
+	    ['rShldr', 0,0,-30],
+	    ['lShldr', 0,0,30],
+	    ['rThigh', 10,0,-10],
+	    ['lThigh', -10,0,10],
+	    ['rFoot', 10,-5,10],
+	    ['lFoot', -10,-5,-10],
+	    ['head', 0,-15,0],
+	];
+	bvhLoader.addModel( meshs.Armature, offsets );
 
 	// set skeleton reference, only meshs.Armature have animation
 	meshs.Body.skeleton.setReference( meshs.Armature.skeleton );
+	meshs.Sling.skeleton.setReference( meshs.Armature.skeleton );
+	meshs.Shoes.skeleton.setReference( meshs.Armature.skeleton );
 	meshs.Head.skeleton.setReference( meshs.Armature.skeleton );
 	meshs.Head_plus.skeleton.setReference( meshs.Armature.skeleton );
 
-
-	bvhLoader.load( "./assets/bvh/ClubDance.bvh", function ( result ) { result.name = "ClubDance"; addAnimation( result ); } )
+	bvhLoader.load( "./assets/bvh/idle.bvh", function ( result ) { result.name = "idle"; addAnimation( result ); } )
 
 }
 
-function addAnimation( result ) {
+function addAnimation ( result ) {
 
     result.clip.name = result.name;
     var seq =  [];
@@ -204,11 +256,11 @@ function addAnimation( result ) {
 
     bvhLoader.applyToModel( meshs.Armature, result, seq, pos );
 
-    meshs.Armature.play( result.name );
+    //meshs.Armature.play( result.name );
 
 }
 
-function dropAnimation( e ){
+function dropAnimation ( e ) {
 
     e.preventDefault();
 
@@ -240,11 +292,11 @@ function addEyes () {
 
 	eyes = new Eyes();
 	scene.add(eyes);
-	attachToBone(eyes, 'head');
+	attachToBone( eyes, 'head' );
 
 }
 
-function attachToBone( mesh, boneName ){
+function attachToBone ( mesh, boneName ){
 
 	var bones = meshs.Armature.skeleton.bones, b;
 	for(var i = 0, lng = bones.length; i < lng; i++ ){
