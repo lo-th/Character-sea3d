@@ -259,13 +259,15 @@ void main(){
 	vec3 composites = vec3(1.0);
 	vec3 fNormalDiff = mNormal;
 
-	if( 0 == 1 ){
+	//if( 0 == 1 ){
+
 		// Diff Normals. All lighting done in view space
 		fNormalDiff = normalMapComp( texEyeNrm, eyeUVs, -vPosition, normalize( normalMatrix * iris_normal ),  -bump_texture * mix( 0.5, 1.0, cornea_mask) );
 		// Put Spec Normals in view space too
 		fNormalSpec = vec3( viewMatrix * vec4( fNormalSpec, 0.0 ));
 		
-		vec3 directionalLightDirection = vec3( -1.0, 1.75, 1.0 );				
+		//vec3 directionalLightDirection = vec3( -1.0, 1.75, 1.0 );	
+		vec3 directionalLightDirection = vec3( -0.414, 1.0, 0.804 );			
 		vec3 dirLgtVector = normalize( vec3( viewMatrix * vec4( directionalLightDirection, 0.0 )));
 		//diffuse
 		float diffuse = max( dot( fNormalDiff, dirLgtVector ), 0.0 ) * 0.6;
@@ -278,11 +280,12 @@ void main(){
 		vec3 hemiLightDirection = vec3( 0.0, 1.0, 0.0 );				
 		vec3 hemiLgtVector = normalize( vec3( viewMatrix * vec4( hemiLightDirection, 0.0 )));	
 		float hemiDiffuseWeight = 0.5 * dot( fNormalDiff, hemiLgtVector ) + 0.5;
-		vec3  hemiCol = mix( vec3( 0.08, 0.03, 0.002 ), vec3( 0.15, 0.2, 0.25 ), hemiDiffuseWeight);
+		//vec3  hemiCol = mix( vec3( 0.08, 0.03, 0.002 ), vec3( 0.15, 0.2, 0.25 ), hemiDiffuseWeight);
+		vec3  hemiCol = mix( vec3( 0.568, 0.5, 0.42 ), vec3( 0.3, 0.4, 0.55 ), hemiDiffuseWeight);
 			
 		composites = mix( eyeTex * (diffuse + hemiCol), envTex, fresnel ) + specular;
 
-	} else {
+	/*} else {
 
 		fNormalDiff = normalMapComp( texEyeNrm, eyeUVs, -vPosition, normalize( mat3( modelMatrix[0].xyz, modelMatrix[1].xyz, modelMatrix[2].xyz ) * iris_normal ),  -bump_texture * mix( 0.5, 1.0, cornea_mask) );
 		vec3 sphericalDiff = sphericalRefl( texEnvDif,  fNormalDiff  ) * 1.3; //brighten it up a bit
@@ -292,7 +295,7 @@ void main(){
 		composites = mix( eyeTex * sphericalDiff, sphericalDiffCatarax, cornea_fade * 10.0 * cornea_mask) + cybTex;
 		composites = composites * ( 1.0 - fresnel ) + ( envTex * fresnel );
 
-	}
+	}*/
 
 	// linear to sRGB
 	composites =  pow( composites, vec3(1.0 / 2.2));
