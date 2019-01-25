@@ -78,8 +78,8 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 		var textureColor = loader.load( './assets/textures/eye/eye_c.jpg' );
 		var textureNormal = loader.load( './assets/textures/eye/eye_n.jpg' );
-		var textureEnv = loader.load( './assets/textures/eye/env.jpg' );
-		var textureEnv2 = loader.load( './assets/textures/eye/env2.jpg' );
+		var textureEnv = loader.load( './assets/textures/river.jpg' );
+		var textureEnv2 = loader.load( './assets/textures/river_low.jpg' );
 		var textureRfc = loader.load( './assets/textures/eye/rfc.png' );
 
 		textureColor.minFilter = textureColor.magFilter = THREE.LinearFilter;

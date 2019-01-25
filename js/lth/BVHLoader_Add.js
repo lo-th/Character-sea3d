@@ -222,8 +222,8 @@ THREE.BVHLoader.prototype.addModel = function( model, offsets, options ){
         b = bones[ i ];
 
         // get id of parent bones
-        if( b.parent ) b.userData['id'] = bones.indexOf( b.parent );
-        else  b.userData['id'] = -1;
+        if( b.parent ) b.userData['pid'] = bones.indexOf( b.parent );
+        else  b.userData['pid'] = -1;
 
         //if( options !== undefined ) this.renameBone( b, options.names );
 
@@ -251,8 +251,6 @@ THREE.BVHLoader.prototype.addModel = function( model, offsets, options ){
     this.sizes[name] = p[1].distanceTo( p[2] ) + p[2].distanceTo( p[3] );
 
 };
-
-
 
 THREE.BVHLoader.prototype.renameBone = function( bone, names ){
 
@@ -342,7 +340,7 @@ THREE.BVHLoader.prototype.applyToModel = function ( model, result, seq, Pos ) {
         bone = bones[ i ];
         name = bone.name;
 
-        if( name === 'root' ) bone.matrixWorld.copy( tPose[i] );
+        //if( name === 'root' ) bone.matrixWorld.copy( tPose[i] );
         if( name === 'hip' ) bone.matrixWorld.copy( tPose[i] );
 
         nodeTracks[ i ] = this.findBoneTrack( name, baseTracks );
@@ -402,11 +400,9 @@ THREE.BVHLoader.prototype.applyToModel = function ( model, result, seq, Pos ) {
 
             if( nodeTracks[i].length === 2 ){
 
-                //parentMtx = bone.parent ? bone.parent.matrixWorld : matrixWorldInv;
-                parentMtx = bone.parent ? tPose[ bone.userData.id ] : matrixWorldInv;
-               // parentMtx = bone.userData.id ? tPose[ bone.userData.id ] : matrixWorldInv;
+                // get parent matrix if existe
 
-                //console.log( bone.parent.name, name )
+                parentMtx = bone.userData.pid !== -1 ? tPose[ bone.userData.pid ] : matrixWorldInv;
 
                 // rotation
 
