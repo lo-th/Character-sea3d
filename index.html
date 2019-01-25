@@ -209,6 +209,7 @@ function loadModel () {
 	var loader = new THREE.SEA3D()
 	loader.onComplete = function () {
 
+		// get loaded object
 		var i = loader.meshes.length, m;
 		while( i-- ){
 
@@ -248,6 +249,7 @@ function loadModel () {
 		meshs.Head.material = materials.head;
 		meshs.Head_plus.material = materials.head_plus;
 
+		// morphs
 		meshs.Head.setWeight( "smile_open", 1 );
 		isMorph = true;
 
@@ -357,6 +359,8 @@ function attachToBone ( mesh, boneName ){
 	}
 
 }
+
+// environement
 
 function loadEnvMap (){
 
