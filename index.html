@@ -45,7 +45,9 @@ body {
 <script src="./js/loaders/BVHLoader.js"></script>
 <!-- gui -->
 <script src="./js/libs/uil.min.js"></script>
-<script src="./js/lth/gui.js"></script>
+<script src="./js/gui.js"></script>
+<!-- physics -->
+<script src="./js/physics.js"></script>
 <!-- lth -->
 <script src="./js/lth/BVHLoader_Add.js"></script>
 <script src="./js/lth/Skeleton_Add.js"></script>
@@ -56,15 +58,20 @@ body {
 <body>
 <script>
 
+var random = THREE.Math.randInt;
+
 var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader, eyes, environement;
 var count1 = 0;
-var nextBlink = THREE.Math.randInt(200,600); 
+var nextBlink = random(200,600); 
 var meshs = {};
 var materials = {};
 var isMorph = false;
 
 // main character reference
 var character = null;
+
+// for all physics object
+var physicsGroup = null;
 
 init();
 animate();
@@ -93,6 +100,9 @@ function init() {
 
 	scene = new THREE.Scene();
 
+	physicsGroup = new THREE.Group();
+	scene.add( physicsGroup );
+
 	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
 	camera.position.set( 0, 60, 160 );
 
@@ -100,8 +110,6 @@ function init() {
 	controler.target.set( 0, 40, 0 );
     controler.screenSpacePanning = true;
     controler.update();
-
-    
 
 	window.addEventListener( 'resize', resize, false );
 
@@ -120,6 +128,22 @@ function init() {
 	gui.init();
 
 	
+ 
+}
+
+function initPhysics() {
+
+	physics.init( physicsTest );
+
+}
+
+function physicsTest() {
+
+	physics.add({ type:'plane', friction:1 });
+	var i = 200
+	while( i-- ) physics.add({ type:'sphere',   size:[4], pos:[random(-10,10),100+i,random(-10,10)], mass:1, friction:0.5, angular:0.1 });
+
+	physics.start();
 
 }
 
@@ -175,7 +199,7 @@ function addGroundAndLight () {
 	scene.add( ambient );
 
 	var light = new THREE.DirectionalLight( 0xffffef, 0.75 );
-	light.position.set(-0.414, 1, 0.804).multiplyScalar(200);
+	light.position.set(-0.414, 1, 0.804 ).multiplyScalar(200);
     //light.position.set( 50, 300, 200 );
     
     light.shadow = new THREE.LightShadow( new THREE.OrthographicCamera( 300, -300, 300, -300,  100, 600 ) );

@@ -56,18 +56,15 @@ mat4 InverseMatrix( mat4 A ) {
 	return B;
 }
 
-mat3 makeRotationDir( vec3 direction, vec3 up )
-{
+mat3 makeRotationDir( vec3 direction, vec3 up ){
+
 	 vec3 xaxis = normalize( cross( up, direction));
 	 vec3 yaxis = normalize( cross( direction, xaxis));
+	return mat3( xaxis.x, xaxis.y, xaxis.z, yaxis.x, yaxis.y, yaxis.z, direction.x, direction.y, direction.z );
 
-	return mat3( xaxis.x,         xaxis.y,     xaxis.z,
-				 yaxis.x,         yaxis.y,     yaxis.z,
-				 direction.x, direction.y, direction.z);
 }
 
-mat3 rotationMatrix(vec3 axis, float angle)
-{
+mat3 rotationMatrix( vec3 axis, float angle ) {
 	axis = normalize(axis);
 	float s = sin(angle);
 	float c = cos(angle);
@@ -78,18 +75,10 @@ mat3 rotationMatrix(vec3 axis, float angle)
 				oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c);
 }
 
-vec3 corneaVertexDisp
-(
-	vec3		eyeP,
-	vec3		eyeN,
-	float		iris_size,
-	float		cornea_bump_amount,
-	float		cornea_bump_radius_mult,
-	out vec3	outN
-)
-{
+vec3 corneaVertexDisp ( vec3 eyeP, vec3 eyeN, float iris_size, float cornea_bump_amount, float cornea_bump_radius_mult, out vec3 outN ) {
+
 	vec3 _norm_P = normalize( eyeP );
-	float iris_depth = 1.0 - pow(  iris_size, 3.0 );
+	float iris_depth = 1.0 - pow(  abs(iris_size), 3.0 );
 	float _measured_eye_radius = length( eyeP );
 	float _iris_rad = sqrt( max( 0.0, 1.0 - iris_depth * iris_depth ) );
 	float _bump_t = 1.0;
@@ -98,7 +87,7 @@ vec3 corneaVertexDisp
 		_bump_t = min( 1.0, sqrt( max( 0.0, 1.0 - _norm_P[2] * _norm_P[2] ) ) / (
 				_iris_rad * cornea_bump_radius_mult ) );
 	}
-	float _bump_factor = pow( 1.0 - pow( _bump_t, 2.5 ), 1.0 ); 
+	float _bump_factor = pow( abs(1.0 - pow( abs(_bump_t), 2.5 )), 1.0 ); 
 	_bump_factor *= cornea_bump_amount * _iris_rad * _measured_eye_radius;
 	
 	// faking bulging cornea normals yolo

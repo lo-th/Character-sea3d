@@ -98,7 +98,7 @@ void main(){
 	float iris_U = 0.0;
 	float iris_V = 0.0;
 	
-	float iris_depth = 1.0 - pow( iris_size, 3.0 );
+	float iris_depth = 1.0 - pow( abs(iris_size), 3.0 );
 	float iris_shading_curvature = arg_iris_shading_curvature;
 	vec3 _norm_P = normalize( mPosition );
 	float _measured_eye_radius = length( mPosition );
@@ -177,15 +177,15 @@ void main(){
 				vec3 _iris_ST_orient = vec3( _iris_ST.xy, 0);
 				float _theta = ( atan( _iris_ST_orient.x, _iris_ST_orient.y ) / PI + 1.0 ) * 0.5;
 				float _r = 0.0;
-				if( catshape == 1 ) {
+				/*if( catshape == 1 ) {
 					// Cat Iris
 					float cateyeShift = 0.3;
 					_final_pupil_size = _final_pupil_size * ( 1.0 + cateyeShift );
 					_r =  sqrt( pow( pow( _iris_ST.x, 0.7), 2.0 ) + pow( _iris_ST.y * ( _final_pupil_size + cateyeShift ), 2.0 ));
-				}else{
+				}else{*/
 					// Human Iris
 					_r = length( _iris_ST_orient );
-				}
+				//}
 				
 				if( _r <= 1.0 + _cur_refract_edge_softness * _refract_edge_angle_boost ) {
 					float _iris_pos = (_r - _final_pupil_size) / (_final_iris_size - _final_pupil_size);
@@ -231,7 +231,7 @@ void main(){
 	*/
 	// temporary fix
 	cybTex = vec3( sphericalRefl( texEnvRfr, _refract_vec ).x * pupil_mask * 2.0, 0, 0);
-	cybTex = pow( cybTex, vec3(2.2) ) * vec3(cybshape);
+	cybTex = pow( abs(cybTex), vec3(2.2) ) * vec3(cybshape);
 	envTex *= mix( vec3(1.0), mix( vec3(0.8), vec3( 0.7, 0.2, 1.0 ), cornea_mask), cybshape );
 
 	
@@ -239,7 +239,7 @@ void main(){
 	const float fresBias = 0.002;
 	const float fresScale = 0.5;
 	const float fresPow = 6.0;
-	float fresnel = fresBias + fresScale * pow( 1.0 + dot( oView, fNormalSpec ), fresPow );		
+	float fresnel = fresBias + fresScale * pow( abs(1.0 + dot( oView, fNormalSpec )), fresPow );		
 	
 	// eye texture
 	vec3 eyeTexIris = vec3( 0.8 ); 
@@ -251,9 +251,10 @@ void main(){
 	vec3 eyeTex = mix( eyeTexSclera, eyeTexIris, cornea_mask );		
 
 	//sRGB to linear
-	eyeTex = pow( eyeTex, vec3(2.2) );
-	envTex = pow( envTex, vec3(2.2) );
-	envTex = envTex * 10.0;  envTex = pow(envTex, vec3(1.6));// exposure and gamma increase to match HDR
+	eyeTex = pow( abs(eyeTex), vec3(2.2) );
+	envTex = pow( abs(envTex), vec3(2.2) );
+	envTex = envTex * 10.0;  
+	envTex = pow( abs(envTex), vec3(1.6));// exposure and gamma increase to match HDR
 
 	// experiment with diffuse lighting vs baked hdr diffuse
 	vec3 composites = vec3(1.0);
@@ -274,7 +275,7 @@ void main(){
 		//spec
 		vec3 dirHalfVector = normalize( dirLgtVector + normalize( -vPosition ) );
 		float dirDotNormalHalf = max( dot( fNormalSpec, dirHalfVector ), 0.0 );
-		float specular = max( pow( dirDotNormalHalf, 1000.0 ), 0.0 ) * 5.0;
+		float specular = max( pow( abs(dirDotNormalHalf), 1000.0 ), 0.0 ) * 5.0;
 		
 		// Dome light
 		vec3 hemiLightDirection = vec3( 0.0, 1.0, 0.0 );				
@@ -298,7 +299,7 @@ void main(){
 	}*/
 
 	// linear to sRGB
-	composites =  pow( composites, vec3(1.0 / 2.2));
+	composites =  pow( abs(composites), vec3(1.0 / 2.2));
 
 	gl_FragColor = vec4( composites, 1.0);
 }

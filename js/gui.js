@@ -173,6 +173,10 @@ gui = {
 
     	current = 'physics';
 
+        ui.add('button', { name:'START TEST', p:0, h:30 }).onChange( initPhysics );
+        ui.add('button', { name:'RESET', p:0, h:30 }).onChange( physics.reset );
+
+
     },
 
     kinematics: function () {
