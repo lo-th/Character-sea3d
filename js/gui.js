@@ -167,6 +167,8 @@ gui = {
     	timebarre.setReference( character );
     	timebarre.show();
 
+        ui.add('button', { name:'LOAD BVH', fontColor:'#D4B87B', h:40, drag:true, p:0 }).onChange( parseAnimation );
+
     },
 
     physics: function () {

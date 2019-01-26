@@ -323,6 +323,14 @@ function initBVH () {
 
 }
 
+function parseAnimation( data, name, type ) {
+
+    var result = bvhLoader.parseData( data );
+    result.name = name;
+    addAnimation( result );
+
+}
+
 function addAnimation ( result ) {
 
     result.clip.name = result.name;
@@ -355,9 +363,7 @@ function dropAnimation ( e ) {
 
     reader.onload = function ( e ) {
 
-    	var result = bvhLoader.parseData( e.target.result );
-    	result.name = name
-        addAnimation( result );
+    	parseAnimation( e.target.result, name );
 
     };
 
