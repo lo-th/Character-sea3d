@@ -265,6 +265,7 @@ var physics = ( function () {
             if( m === 'add' ){
                 meshData.push( o );
             }
+
         },
 
         send: function ( m, o ) {
@@ -365,6 +366,7 @@ var simulator = ( function () {
     var mat = null;
 
     var torad = 0.0174532925199432957;
+    var PI90 = 1.570796326794896;
 
     var isSkeleton = false;
     var isShow = false;
@@ -372,6 +374,24 @@ var simulator = ( function () {
     simulator = {
 
         byName: {},
+
+        step: function(){
+
+            if( !physics.isStart ) return;
+            if( !bodys.length ) return;
+
+            bodys.forEach( function( b, id ) {
+
+                var n = ( id * 8 );
+                b.position.fromArray( Ar, n + 1 );
+                b.quaternion.fromArray( Ar, n + 4 );
+
+            });
+
+            //simulator.applyPhysicsBone()
+
+        },
+
 
         getBodys: function (){
             
@@ -381,6 +401,7 @@ var simulator = ( function () {
 
         show: function ( b ) {
 
+            if( mat === null ) return;
             mat.kinematic.visible = b;
             mat.static.visible = b;
             
@@ -402,24 +423,6 @@ var simulator = ( function () {
 
             meshBones = [];
             isSkeleton = false;
-
-        },
-
-        step: function(){
-
-            if( !physics.isStart ) return;
-
-            if( !bodys.length ) return;
-
-            bodys.forEach( function( b, id ) {
-
-                var n = ( id * 8 );
-                b.position.fromArray( Ar, n + 1 );
-                b.quaternion.fromArray( Ar, n + 4 );
-
-            });
-
-            //simulator.applyPhysicsBone()
 
         },
 
@@ -453,9 +456,10 @@ var simulator = ( function () {
             var mtx = new THREE.Matrix4();
 
             var tmpMtx = new THREE.Matrix4();
-            var tmpMtxInv = new THREE.Matrix4();
             var tmpMtxR = new THREE.Matrix4();
-            var tmpMtxR2 = new THREE.Matrix4();
+            //var tmpMtxInv = new THREE.Matrix4();
+            
+            //var tmpMtxR2 = new THREE.Matrix4();
 
             var p1 = new THREE.Vector3();
             var p2 = new THREE.Vector3();
@@ -509,15 +513,15 @@ var simulator = ( function () {
 
                         // translation
                         tmpMtx.makeTranslation( translate[0], translate[1], translate[2] );
-                        tmpMtxInv.makeTranslation( -translate[0], -translate[1], -translate[2] );
+                        //tmpMtxInv.makeTranslation( -translate[0], -translate[1], -translate[2] );
                         // rotation
                         if( r!==0 ){
 
                             tmpMtxR.makeRotationFromEuler( e.set( 0, 0, r*torad ) );
                             tmpMtx.multiply( tmpMtxR );
 
-                            tmpMtxR2.makeRotationFromEuler( e.set( 0, 0, -r*torad ) );
-                            tmpMtxInv.multiply( tmpMtxR2 );
+                            //tmpMtxR2.makeRotationFromEuler( e.set( 0, 0, -r*torad ) );
+                            //tmpMtxInv.multiply( tmpMtxR2 );
 
                         }
                          
@@ -548,7 +552,9 @@ var simulator = ( function () {
 
                         mesh.userData.isKinematic = kinematic;
                         mesh.userData.decal = tmpMtx.clone();
-                        mesh.userData.decalinv = tmpMtxInv.clone();
+                        mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );//tmpMtxInv.clone();
+
+
 
                         mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
                         //mesh.userData.dist = dist;
@@ -607,7 +613,7 @@ var simulator = ( function () {
 
                 }
 
-                geo.plane.rotateX( -Math.PI90 );
+                geo.plane.rotateX( -PI90 );
 
             }
 
@@ -654,14 +660,14 @@ var simulator = ( function () {
             }
 
             // rotation is in degree
-            o.rot = o.rot === undefined ? [0,0,0] : Math.vectorad(o.rot);
+            o.rot = o.rot === undefined ? [0,0,0] : simulator.vectorad( o.rot );
             o.quat = o.quat === undefined ? new THREE.Quaternion().setFromEuler( new THREE.Euler().fromArray( o.rot ) ).toArray() : o.quat;
 
-            if(o.rotA) o.quatA = new THREE.Quaternion().setFromEuler( new THREE.Euler().fromArray( Math.vectorad( o.rotA ) ) ).toArray();
-            if(o.rotB) o.quatB = new THREE.Quaternion().setFromEuler( new THREE.Euler().fromArray( Math.vectorad( o.rotB ) ) ).toArray();
+            if(o.rotA) o.quatA = new THREE.Quaternion().setFromEuler( new THREE.Euler().fromArray( simulator.vectorad( o.rotA ) ) ).toArray();
+            if(o.rotB) o.quatB = new THREE.Quaternion().setFromEuler( new THREE.Euler().fromArray( simulator.vectorad( o.rotB ) ) ).toArray();
 
-            if(o.angUpper) o.angUpper = Math.vectorad( o.angUpper );
-            if(o.angLower) o.angLower = Math.vectorad( o.angLower );
+            if(o.angUpper) o.angUpper = simulator.vectorad( o.angUpper );
+            if(o.angLower) o.angLower = simulator.vectorad( o.angLower );
 
             var mesh = null;
             var material;
@@ -678,9 +684,10 @@ var simulator = ( function () {
             }
 
             if(o.type === 'plane'){
-                //this.grid.position.set( o.pos[0], o.pos[1], o.pos[2] )
+
                 physics.send( 'add', o ); 
                 return;
+
             }
             
             if( o.type === 'capsule' ){
@@ -696,15 +703,11 @@ var simulator = ( function () {
                 
             }
 
-
             if( mesh ){
 
                 if( !isCustomGeometry ) mesh.scale.fromArray( o.size );
                 mesh.position.fromArray( o.pos );
                 mesh.quaternion.fromArray( o.quat );
-
-                //mesh.receiveShadow = true;
-                mesh.castShadow = moveType !== 1 ? true : false;
 
                 if( o.name === undefined ) o.name =  moveType !== 1 ? 'b'+ bodys.length : 'f'+ solids.length;
                 mesh.name = o.name;
@@ -725,7 +728,7 @@ var simulator = ( function () {
 
                 }
 
-                // send to worker
+                // send to physics worker
                 physics.sendTmp( 'add', o );
 
             }
@@ -738,6 +741,14 @@ var simulator = ( function () {
                 return mesh;
 
             }
+
+        },
+
+        vectorad: function ( r ) {
+
+            var i = r.length;
+            while(i--) r[i] *= torad;
+            return r;
 
         },
         

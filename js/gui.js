@@ -12,7 +12,7 @@ var buttons = []
 
 
 
-var BB = [ 'X', 'ANIMATION', 'PHYSICS', 'KINEMATICS' ];
+var MENU = [ 'X', 'ANIMATION', 'PHYSICS', 'KINEMATICS' ];
 
 var bone, sx, sy, sz, wx, wy, wz;
 
@@ -107,13 +107,10 @@ gui = {
 
         timebarre = new Timebarre( content, selectColor );
 
-        for(var i=0; i<BB.length; i++ ) this.addButton(i);
+        for( var i = 0; i < MENU.length; i++ ) this.addButton(i);
 
+        UIL.Tools.setText( 12, '#CCC', 'Consolas, Monaco, monospace' );
         ui = new UIL.Gui( { w:250, bg:'rgba(23,23,23,0)', close:false, parent:mainMenu, top:50, css:'right:0;' } );
-
-        //gui.select(4);
-
-        //view.setUI( gui );
 
     },
 
@@ -127,14 +124,14 @@ gui = {
 
         var b = document.createElement('div');
         b.style.cssText =  'color:#CCC;  font-size: 14px;  margin:0px 0px; padding: 0px 15px; line-height:40px; position:relative; pointer-events:auto; height:40px; display:inline-block; text-align:center; cursor:pointer; transition:all 0.3s ease;';
-        b.textContent = BB[i];
+        b.textContent = MENU[i];
         b.id = i;
 
         b.addEventListener( 'mouseover', function(e){ this.style.color = '#FFF'; this.style.background = over; }, false );
         b.addEventListener( 'mouseout', function(e){ this.style.color = '#CCC'; if( gui.ID === Number(this.id) && gui.ID !== 0 ) this.style.background = selected; else this.style.background = out; }, false );
         b.addEventListener( 'click', function(e){ gui.select( this.id ); }, false );
 
-        buttons.push(b);
+        buttons.push( b );
 
         menu.appendChild( b );
 
@@ -171,7 +168,6 @@ gui = {
 
         var gr0 = ui.add('group', { name:'MORPH', h:30 });
 
-       
         for(var m in morphs){
 
             gr0.add( morphs, m, { min:0, max:1, precision:2, h:30, stype:2 }).onChange( applyMorphs );
@@ -199,9 +195,6 @@ gui = {
     	current = 'kinematics';
 
     },
-
-
-
 
 }
 
