@@ -186,7 +186,7 @@ var physics = ( function () {
 
         update: function () {
 
-            //physics.send('matrixArray', simulator.getMatrixArray() );
+            physics.send( 'matrixArray', simulator.getSkeletontMatrix() );
 
             if( isBuffer ) worker.postMessage( { m:'step', Ar:Ar }, [ Ar.buffer ] );
             else worker.postMessage( { m:'step' } );
@@ -313,6 +313,12 @@ var physics = ( function () {
             return simulator.add( o );
 
         },
+
+        addSkeleton: function () {
+
+            return simulator.addSkeleton();
+
+        },
         
     }
 
@@ -329,8 +335,15 @@ var simulator = ( function () {
     var solids = [];
     var extraGeo = [];
 
+    var meshBones = [];
+    var linkBones = [];
+
     var geo = null;
     var mat = null;
+
+    var torad = 0.0174532925199432957;
+
+    var isSkeleton = false;
 
     simulator = {
 
@@ -343,6 +356,9 @@ var simulator = ( function () {
             while( extraGeo.length > 0 ) extraGeo.pop().dispose();
             while( bodys.length > 0 ) physicsGroup.remove( bodys.pop() );
             while( solids.length > 0 ) physicsGroup.remove( solids.pop() );
+
+            meshBones = [];
+            isSkeleton = false;
 
         },
 
@@ -364,6 +380,191 @@ var simulator = ( function () {
 
         },
 
+        getSkeletontMatrix: function () {
+            
+            var r = [];
+
+            if( !meshBones.length ) return r;
+
+            meshBones.forEach( function( b ) {
+
+                if( b.userData.isKinematic ) r.push( b.userData.matrix );
+
+            });
+
+            return r;
+
+        },
+
+        addSkeleton: function () {
+
+            if( isSkeleton ) return;
+
+
+
+            var p = new THREE.Vector3();
+            var s = new THREE.Vector3();
+            var q = new THREE.Quaternion();
+            var tmpEuler = new THREE.Euler();
+            var mtx = new THREE.Matrix4();
+
+            var tmpMtx = new THREE.Matrix4();
+            var tmpMtxR = new THREE.Matrix4();
+            var tmpMtxR2 = new THREE.Matrix4();
+
+            var tmpMtxInv = new THREE.Matrix4();
+
+            var skeleton = character.skeleton;
+            var bones = skeleton.bones;
+
+            var p1 = new THREE.Vector3();
+            var p2 = new THREE.Vector3();
+            var i, lng = bones.length, name, n, bone, child, o, d = 1, w = 4, z = 1, dist=1, type, mesh, r, kinematic, translate, parentName;
+
+            for( i = 0; i<lng; i++ ){
+
+                type = null;
+                parentName = null;
+
+                bone = bones[i];
+                name = bone.name;
+
+                if( bone.parent && bone.parent.isBone ) {
+
+                    n = bone.parent.name;
+
+                    d = 1;
+                    w = 11;
+                    r = 90;
+
+                    p1.setFromMatrixPosition( bone.parent.matrixWorld );
+                    p2.setFromMatrixPosition( bone.matrixWorld );
+                    dist = p1.distanceTo( p2 );
+                    translate = [ -dist * 0.5, 0, 0 ];
+
+                    kinematic = true;
+
+                    // body
+                    if( n==='head' ){ type = 'capsule'; w = 7;  d = dist; r=90; }
+                    if( n==='chest' && name==='neck' ){ type = 'box'; w = dist;  d = 15; z = 13; r=0; }
+                    if( n==='abdomen' && name==='chest'){ type = 'box'; w = dist; d = 14; z = 12; r=0; }
+                    if( n==='hip' && name==='abdomen' ){ type = 'box'; w = dist; d = 13; z = 10; r = 0; }
+
+                    // arms
+                    if( n==='lCollar' || n==='rCollar' ){   type = 'cylinder'; w = 3; d = dist; }
+                    if( n==='rShldr'  && name==='rForeArm' ){    type = 'cylinder'; w = 3; d = dist; }
+                    if( n==='lShldr'  && name==='lForeArm' ){    type = 'cylinder'; w = 3; d = dist; }
+                    if( n==='rForeArm' && name==='rHand' ){ type = 'cylinder'; w = 2; d = dist; }
+                    if( n==='lForeArm' && name==='lHand' ){ type = 'cylinder'; w = 2; d = dist; }
+
+                    // legs
+                    if( n==='rThigh' && name==='rShin' ){ type = 'cylinder'; w = 4; d = dist; }
+                    if( n==='lThigh' && name==='lShin' ){ type = 'cylinder'; w = 4; d = dist; }
+                    if( n==='rShin' && name==='rFoot' ){  type = 'cylinder'; w = 3; d = dist; }
+                    if( n==='lShin' && name==='lFoot' ){  type = 'cylinder'; w = 3; d = dist; }
+
+
+
+
+
+
+                    if( type !== null ){
+
+                        if( type === 'cylinder' ) z = w;
+                        if( type === 'sphere' ) { d = w; z = w }
+
+                        tmpMtx.makeTranslation( translate[0], translate[1], translate[2] );
+                        tmpMtxInv.makeTranslation( -translate[0], -translate[1], -translate[2] );
+
+                        if( r!==0 ){
+
+                            tmpMtxR.makeRotationFromEuler( tmpEuler.set( 0, 0, r*torad ) );
+                            tmpMtx.multiply( tmpMtxR );
+
+                            tmpMtxR2.makeRotationFromEuler( tmpEuler.set( 0, 0, -r*torad ) );
+                            tmpMtxInv.multiply( tmpMtxR2 );
+
+                        }
+
+                         
+                        mtx.multiplyMatrices( bone.parent.matrixWorld, tmpMtx );
+                        mtx.decompose( p, q, s );
+
+                        
+
+                        mesh = simulator.add({
+
+                            name: n,
+                            type: type,
+                            size:[w,d,z],
+                            pos: p.toArray(),
+                            quat: q.toArray(),
+                            kinematic: kinematic,
+                            mass: kinematic ? 0 : 1,
+                            friction: kinematic ? 0 : 1, 
+                            restitution:0,
+
+                            linear: kinematic ? 0 : 0.5,
+                            angular: kinematic ? 0 : 2,
+
+                            //group: kinematic ? 1 : 2,
+                            //mask: kinematic ? 2 : 1,
+
+                            neverSleep: true,
+
+                        });
+
+                        mesh.userData.isKinematic = kinematic;
+                        mesh.userData.decal = tmpMtx.clone();
+                        mesh.userData.decalinv = tmpMtxInv.clone();
+
+                        mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
+                        //mesh.userData.dist = dist;
+
+                        //mesh.userData.top = bone.parent.position.clone();
+                        //mesh.userData.quat = bone.parent.quaternion.clone().multiply(revQ).normalize();
+
+                        mesh.userData.bone = bone.parent;
+                        mesh.userData.parentName = parentName;
+
+                        bone.parent.userData.mesh = mesh;
+                        bone.parent.userData.isPhysics = true;
+                        bone.parent.userData.isKinematic = kinematic;
+
+                        //bone.userData.mesh = mesh;
+                        //bone.userData.isPhysics = true;
+                        //bone.userData.isKinematic = kinematic;
+                        
+
+                        if( kinematic ) meshBones.push( mesh );
+                        else linkBones.push( mesh );
+                            
+                        
+
+                        //simulator.byname[ mesh.name ] = mesh;
+
+                    }
+                }
+
+            }
+
+            isSkeleton = true;
+
+        },
+
+        removeSkeleton: function () {
+
+            if( !isSkeleton ) return;
+
+            // clear physics engine
+            //physics.reset( true );
+
+            meshBones = [];
+
+            isSkeleton = false;
+            //isInit = false;
+
+        },
 
         add: function ( o ) {
 
@@ -451,7 +652,7 @@ var simulator = ( function () {
             
             if( o.type === 'capsule' ){
 
-                var g = new THREE.CapsuleBufferGeometry( o.size[0]  , o.size[1]*0.5 );
+                var g = new THREE.CapsuleBufferGeometry( o.size[0], o.size[1]*0.5 );
                 mesh = new THREE.Mesh( g, material );
                 extraGeo.push( mesh.geometry );
                 isCustomGeometry = true;

@@ -47,6 +47,7 @@ body {
 <script src="./js/libs/uil.min.js"></script>
 <script src="./js/gui.js"></script>
 <!-- physics -->
+<script src="./js/geometries/CapsuleBufferGeometry.js"></script>
 <script src="./js/physics.js"></script>
 <!-- lth -->
 <script src="./js/lth/BVHLoader_Add.js"></script>
@@ -126,8 +127,6 @@ function init() {
 
 	// init interface
 	gui.init();
-
-	
  
 }
 
@@ -139,9 +138,13 @@ function initPhysics() {
 
 function physicsTest() {
 
+	physics.addSkeleton();
+
 	physics.add({ type:'plane', friction:1 });
 	var i = 200
-	while( i-- ) physics.add({ type:'sphere',   size:[4], pos:[random(-10,10),100+i,random(-10,10)], mass:1, friction:0.5, angular:0.1 });
+	while( i-- ) physics.add({ type:'sphere',   size:[4], pos:[random(-16,16),100+(i*3),random(-16,16)], mass:1, friction:0.5, angular:0.1 });
+
+
 
 	physics.start();
 
@@ -152,7 +155,6 @@ function resize ( e ) {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize( window.innerWidth, window.innerHeight );
-
 	gui.resize();
 
 }
