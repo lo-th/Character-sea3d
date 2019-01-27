@@ -71,7 +71,7 @@ gui = {
 
             b = buttons[i];
 
-            if( Number(b.id) === gui.ID && gui.ID!==0 ) b.style.background = selected;
+            if( Number(b.id) === gui.ID && gui.ID !== 0 ) b.style.background = selected;
             else b.style.background = out;
 
         }
@@ -109,7 +109,7 @@ gui = {
 
         for(var i=0; i<BB.length; i++ ) this.addButton(i);
 
-        ui = new UIL.Gui( { w:200, bg:'rgba(23,23,23,0)', close:false, parent:mainMenu, top:50, css:'right:0;' } );
+        ui = new UIL.Gui( { w:250, bg:'rgba(23,23,23,0)', close:false, parent:mainMenu, top:50, css:'right:0;' } );
 
         //gui.select(4);
 
@@ -167,7 +167,19 @@ gui = {
     	timebarre.setReference( character );
     	timebarre.show();
 
-        ui.add('button', { name:'LOAD BVH', fontColor:'#D4B87B', h:40, drag:true, p:0 }).onChange( parseAnimation );
+        ui.add('button', { name:'LOAD BVH', fontColor:'#D4B87B', h:30, drag:true, p:0 }).onChange( parseAnimation );
+
+        var gr0 = ui.add('group', { name:'MORPH', h:30 });
+
+       
+        for(var m in morphs){
+
+            gr0.add( morphs, m, { min:0, max:1, precision:2, h:30, stype:2 }).onChange( applyMorphs );
+
+        }
+
+        //gr0.open();
+
 
     },
 

@@ -17,7 +17,7 @@
 }
 body { 
 	font-family: Consolas, Monaco, monospace;
-    font-size: 11px; 
+    font-size: 12px; 
     margin: 0; padding: 0; border: 0;
     background: #808080;
     color:#FFF;
@@ -66,6 +66,7 @@ var count1 = 0;
 var nextBlink = random(200,600); 
 var meshs = {};
 var materials = {};
+var morphs = {};
 var isMorph = false;
 
 // main character reference
@@ -206,6 +207,8 @@ function addGroundAndLight () {
 
 }
 
+// _____________________________ load
+
 function loadTexture ( url, flip ) {
 
 	var texture = textureLoader.load( url );
@@ -260,7 +263,8 @@ function loadModel () {
 		meshs.Head_plus.material = materials.head_plus;
 
 		// morphs
-		meshs.Head.setWeight( "smile_open", 1 );
+		morphs = { 'anger':0, 'disgust':0, 'fear':0, 'sad':0, 'smile_closed':1, 'smile_open':0  };
+		applyMorphs();
 		isMorph = true;
 
 		// define main character
@@ -277,6 +281,25 @@ function loadModel () {
 	loader.load( './assets/models/matti.sea' );
 
 }
+
+// _____________________________ morphs
+
+function applyMorphs () {
+
+	for(var m in morphs){
+		morph( m, morphs[m] );
+	}
+
+}
+
+function morph ( name, value ) {
+
+	if(meshs.Head.morphTargetDictionary[name]) meshs.Head.setWeight( name, value );
+	if(meshs.Head_plus.morphTargetDictionary[name]) meshs.Head_plus.setWeight( name, value );
+
+}
+
+// _____________________________ animations
 
 function initBVH () {
 
@@ -355,6 +378,8 @@ function dropAnimation ( e ) {
 
 }
 
+// _____________________________ eyes
+
 function addEyes () {
 
 	eyes = new Eyes();
@@ -376,7 +401,7 @@ function attachToBone ( mesh, boneName ){
 
 }
 
-// environement
+// _____________________________ environement
 
 function loadEnvMap (){
 
@@ -396,7 +421,7 @@ function endLoadEnvMap (){
 
 }
 
-// physics
+// _____________________________ physics
 
 function initPhysics() {
 
