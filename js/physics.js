@@ -602,8 +602,8 @@ var simulator = ( function () {
                     plane:    new THREE.PlaneBufferGeometry(1,1,1,1),
                     box:      new THREE.BoxBufferGeometry(1,1,1),
                     cone:     new THREE.CylinderBufferGeometry( 0,1,0.5 ),
-                    sphere:   new THREE.SphereBufferGeometry( 1, 16, 12 ),
-                    cylinder: new THREE.CylinderBufferGeometry( 1,1,1,12,1 ),
+                    sphere:   new THREE.SphereBufferGeometry( 1, 32, 24 ),//16, 12
+                    cylinder: new THREE.CylinderBufferGeometry( 1,1,1,12,2 ),
 
                 }
 
