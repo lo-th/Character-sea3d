@@ -443,26 +443,26 @@ var simulator = ( function () {
 
             if( isSkeleton ) return;
 
+            // get character bones 
+            var bones = character.skeleton.bones;
+
             var p = new THREE.Vector3();
             var s = new THREE.Vector3();
             var q = new THREE.Quaternion();
-            var tmpEuler = new THREE.Euler();
+            var e = new THREE.Euler();
             var mtx = new THREE.Matrix4();
 
             var tmpMtx = new THREE.Matrix4();
+            var tmpMtxInv = new THREE.Matrix4();
             var tmpMtxR = new THREE.Matrix4();
             var tmpMtxR2 = new THREE.Matrix4();
 
-            var tmpMtxInv = new THREE.Matrix4();
-
-            var skeleton = character.skeleton;
-            var bones = skeleton.bones;
-
             var p1 = new THREE.Vector3();
             var p2 = new THREE.Vector3();
-            var i, lng = bones.length, name, n, bone, child, o, d = 1, w = 4, z = 1, dist=1, type, mesh, r, kinematic, translate, parentName;
+            var i, lng = bones.length, name, n, bone, child, o, type, mesh, r, kinematic, translate, parentName;
+            var size, dist;
 
-            for( i = 0; i<lng; i++ ){
+            for( i = 0; i < lng; i++ ){
 
                 type = null;
                 parentName = null;
@@ -473,70 +473,62 @@ var simulator = ( function () {
                 if( bone.parent && bone.parent.isBone ) {
 
                     n = bone.parent.name;
-
-                    d = 1;
-                    w = 11;
                     r = 90;
 
+                    // get distance between bone and parent
                     p1.setFromMatrixPosition( bone.parent.matrixWorld );
                     p2.setFromMatrixPosition( bone.matrixWorld );
                     dist = p1.distanceTo( p2 );
-                    translate = [ -dist * 0.5, 0, 0 ];
 
+                    translate = [ -dist * 0.5, 0, 0 ];
+                    size = [ dist, 1, 1 ];
                     kinematic = true;
 
                     // body
-                    if( n==='head' ){ type = 'capsule'; w = 7;  d = dist; r=90; }
-                    if( n==='chest' && name==='neck' ){ type = 'box'; w = dist;  d = 15; z = 13; r=0; }
-                    if( n==='abdomen' && name==='chest'){ type = 'box'; w = dist; d = 14; z = 12; r=0; }
-                    if( n==='hip' && name==='abdomen' ){ type = 'box'; w = dist; d = 13; z = 10; r = 0; }
-
+                    if( n==='head' ){ type = 'capsule'; size = [ 7, dist, 7 ]; r = 90; }
+                    if( n==='chest' && name==='neck' ){ type = 'box'; size = [ dist, 15, 13 ]; r = 0; }
+                    if( n==='abdomen' && name==='chest'){ type = 'box'; size = [ dist, 14, 12 ]; r = 0; }
+                    if( n==='hip' && name==='abdomen' ){ type = 'box'; size = [ dist, 13, 11 ]; r = 0; }
                     // arms
-                    if( n==='lCollar' || n==='rCollar' ){   type = 'cylinder'; w = 3; d = dist; }
-                    if( n==='rShldr'  && name==='rForeArm' ){ type = 'cylinder'; w = 3; d = dist; }
-                    if( n==='lShldr'  && name==='lForeArm' ){ type = 'cylinder'; w = 3; d = dist; }
-                    if( n==='rForeArm' && name==='rHand' ){ type = 'cylinder'; w = 2; d = dist; }
-                    if( n==='lForeArm' && name==='lHand' ){ type = 'cylinder'; w = 2; d = dist; }
-
+                    if( n==='lCollar' || n==='rCollar' ){    type = 'cylinder'; size = [ 3, dist, 3 ]; }
+                    if( n==='rShldr' && name==='rForeArm' ){ type = 'cylinder'; size = [ 3, dist, 3 ]; }
+                    if( n==='lShldr' && name==='lForeArm' ){ type = 'cylinder'; size = [ 3, dist, 3 ]; }
+                    if( n==='rForeArm' && name==='rHand' ){  type = 'cylinder'; size = [ 2, dist, 2 ]; }
+                    if( n==='lForeArm' && name==='lHand' ){  type = 'cylinder'; size = [ 2, dist, 2 ]; }
                     // legs
-                    if( n==='rThigh' && name==='rShin' ){ type = 'cylinder'; w = 4; d = dist; }
-                    if( n==='lThigh' && name==='lShin' ){ type = 'cylinder'; w = 4; d = dist; }
-                    if( n==='rShin' && name==='rFoot' ){  type = 'cylinder'; w = 3; d = dist; }
-                    if( n==='lShin' && name==='lFoot' ){  type = 'cylinder'; w = 3; d = dist; }
-
-                    if( n==='rFoot' && name==='rToes' ){ type = 'box'; w = 4; d = 5; z = 12; r = 0; translate = [ -1, 0, -4 ]; }
-                    if( n==='lFoot' && name==='lToes' ){ type = 'box'; w = 4; d = 5; z = 12; r = 0; translate = [ -1, 0, -4 ]; }
+                    if( n==='rThigh' && name==='rShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
+                    if( n==='lThigh' && name==='lShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
+                    if( n==='rShin' && name==='rFoot' ){  type = 'cylinder'; size = [ 3, dist, 3 ]; }
+                    if( n==='lShin' && name==='lFoot' ){  type = 'cylinder'; size = [ 3, dist, 3 ]; }
+                    // foot
+                    if( n==='rFoot' && name==='rToes' ){ type = 'box'; size = [ 4, 5, 12 ]; r = 0; translate = [ -1, 0, -4 ]; }
+                    if( n==='lFoot' && name==='lToes' ){ type = 'box'; size = [ 4, 5, 12 ]; r = 0; translate = [ -1, 0, -4 ]; }
 
 
                     if( type !== null ){
 
-                        if( type === 'cylinder' ) z = w;
-                        if( type === 'sphere' ) { d = w; z = w }
-
+                        // translation
                         tmpMtx.makeTranslation( translate[0], translate[1], translate[2] );
                         tmpMtxInv.makeTranslation( -translate[0], -translate[1], -translate[2] );
-
+                        // rotation
                         if( r!==0 ){
 
-                            tmpMtxR.makeRotationFromEuler( tmpEuler.set( 0, 0, r*torad ) );
+                            tmpMtxR.makeRotationFromEuler( e.set( 0, 0, r*torad ) );
                             tmpMtx.multiply( tmpMtxR );
 
-                            tmpMtxR2.makeRotationFromEuler( tmpEuler.set( 0, 0, -r*torad ) );
+                            tmpMtxR2.makeRotationFromEuler( e.set( 0, 0, -r*torad ) );
                             tmpMtxInv.multiply( tmpMtxR2 );
 
                         }
-
                          
                         mtx.multiplyMatrices( bone.parent.matrixWorld, tmpMtx );
                         mtx.decompose( p, q, s );
-
-                        
 
                         mesh = simulator.add({
 
                             name: n,
                             type: type,
-                            size:[w,d,z],
+                            size: size,
                             pos: p.toArray(),
                             quat: q.toArray(),
                             kinematic: kinematic,
@@ -578,10 +570,6 @@ var simulator = ( function () {
 
                         if( kinematic ) meshBones.push( mesh );
                         else linkBones.push( mesh );
-                            
-                        
-
-                        //simulator.byname[ mesh.name ] = mesh;
 
                     }
                 }
@@ -744,8 +732,8 @@ var simulator = ( function () {
 
             if( mesh ){ 
 
-                mesh.castShadow = true;//false;
-                mesh.receiveShadow = true;//false;
+                mesh.castShadow = o.material !== undefined ? true : false;
+                mesh.receiveShadow = o.material !== undefined ? true : false;
                 simulator.byName[ mesh.name ] = mesh;
                 return mesh;
 
