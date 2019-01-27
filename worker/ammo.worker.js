@@ -156,7 +156,8 @@ self.onmessage = function ( e ) {
         case 'forceArray': tmpForce = o; break;
 
         case 'matrix': tmpMatrix.push( o ); break;
-        case 'matrixArray': tmpMatrix = o; break;
+        //case 'matrixArray': tmpMatrix = o; break;
+        case 'matrixArray': tmpMatrix = tmpMatrix.concat(o); break;
 
         //case 'setVehicle': setVehicle( o ); break;
 

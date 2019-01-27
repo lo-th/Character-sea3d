@@ -130,26 +130,6 @@ function init() {
  
 }
 
-function initPhysics() {
-
-	physics.init( physicsTest );
-
-}
-
-function physicsTest() {
-
-	physics.addSkeleton();
-
-	physics.add({ type:'plane', friction:1 });
-	var i = 200
-	while( i-- ) physics.add({ type:'sphere',   size:[4], pos:[random(-16,16),100+(i*3),random(-16,16)], mass:1, friction:0.5, angular:0.1 });
-
-
-
-	physics.start();
-
-}
-
 function resize ( e ) {
 
 	camera.aspect = window.innerWidth / window.innerHeight;
@@ -210,6 +190,10 @@ function addGroundAndLight () {
     light.shadow.radius = 2;
     light.castShadow = true;
     scene.add( light );
+
+    var hemiLight = new THREE.HemisphereLight( 0x4b678f, 0x887868, 0.5 );
+	hemiLight.position.set( 0, 50, 0 );
+	scene.add( hemiLight );
 
 	var groundMaterial = new THREE.ShadowMaterial({ opacity:0.3, depthTest:true, depthWrite:false });
 	ground = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 ), groundMaterial );
@@ -409,6 +393,46 @@ function endLoadEnvMap (){
 		materials[m].needsUpdate = true;
 
 	}
+
+}
+
+// physics
+
+function initPhysics() {
+
+	physics.init( physicsTest );
+
+}
+
+function physicsTest() {
+
+	physics.addSkeleton();
+
+	physics.add({ type:'box', size:[100,10,100], pos:[0,-5,0], friction:1 });
+
+	var material = new THREE.MeshStandardMaterial( { color: 0x101010, envMap:environement.envmap, metalness:0.7, roughness:0.4, transparent:true, opacity:0.8 } );
+
+	var i = 200;
+	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, angular:0.1, material:material });
+
+	physics.start();
+	physics.extraUpdate = physicsUpdate;
+
+}
+
+function physicsUpdate() {
+
+	var bodys = physics.getBodys();
+	var i = bodys.length, b;
+
+	var r = [];
+
+	while(i--){
+		b = bodys[i];
+		if( b.position.y < -20 ) r.push( [ b.name, [ random(-30,30), random(100,200), random(-30,30) ]] );
+	}
+
+	physics.send( 'matrixArray', r );
 
 }
 

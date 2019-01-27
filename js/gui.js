@@ -175,8 +175,9 @@ gui = {
 
     	current = 'physics';
 
-        ui.add('button', { name:'START TEST', p:0, h:30 }).onChange( initPhysics );
+        ui.add('button', { name:'START', p:0, h:30 }).onChange( initPhysics );
         ui.add('button', { name:'RESET', p:0, h:30 }).onChange( physics.reset );
+        ui.add('Bool', { name:'SHOW LIMIT', value:physics.getShow(), p:70, bColor:hc, inh:hb } ).onChange( physics.show );
 
 
     },

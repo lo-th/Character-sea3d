@@ -66,6 +66,10 @@ var physics = ( function () {
         isReady: false,
         isStart: false,
 
+        extraUpdate: function () {
+
+        }, 
+
         load: function ( Callback, Option ) {
 
             console.log('load')
@@ -187,6 +191,7 @@ var physics = ( function () {
         update: function () {
 
             physics.send( 'matrixArray', simulator.getSkeletontMatrix() );
+            physics.extraUpdate()
 
             if( isBuffer ) worker.postMessage( { m:'step', Ar:Ar }, [ Ar.buffer ] );
             else worker.postMessage( { m:'step' } );
@@ -319,6 +324,24 @@ var physics = ( function () {
             return simulator.addSkeleton();
 
         },
+
+        getBodys: function () {
+
+            return simulator.getBodys();
+
+        },
+
+        show: function ( b ) {
+
+            simulator.show( b );
+
+        },
+
+        getShow: function () {
+
+            return simulator.getShow();
+            
+        },
         
     }
 
@@ -344,10 +367,30 @@ var simulator = ( function () {
     var torad = 0.0174532925199432957;
 
     var isSkeleton = false;
+    var isShow = false;
 
     simulator = {
 
         byName: {},
+
+        getBodys: function (){
+            
+            return bodys;
+
+        },
+
+        show: function ( b ) {
+
+            mat.kinematic.visible = b;
+            mat.static.visible = b;
+            
+        },
+
+        getShow: function () {
+
+            return isShow;
+            
+        },
 
         clear: function (){
 
@@ -400,8 +443,6 @@ var simulator = ( function () {
 
             if( isSkeleton ) return;
 
-
-
             var p = new THREE.Vector3();
             var s = new THREE.Vector3();
             var q = new THREE.Quaternion();
@@ -452,8 +493,8 @@ var simulator = ( function () {
 
                     // arms
                     if( n==='lCollar' || n==='rCollar' ){   type = 'cylinder'; w = 3; d = dist; }
-                    if( n==='rShldr'  && name==='rForeArm' ){    type = 'cylinder'; w = 3; d = dist; }
-                    if( n==='lShldr'  && name==='lForeArm' ){    type = 'cylinder'; w = 3; d = dist; }
+                    if( n==='rShldr'  && name==='rForeArm' ){ type = 'cylinder'; w = 3; d = dist; }
+                    if( n==='lShldr'  && name==='lForeArm' ){ type = 'cylinder'; w = 3; d = dist; }
                     if( n==='rForeArm' && name==='rHand' ){ type = 'cylinder'; w = 2; d = dist; }
                     if( n==='lForeArm' && name==='lHand' ){ type = 'cylinder'; w = 2; d = dist; }
 
@@ -463,9 +504,8 @@ var simulator = ( function () {
                     if( n==='rShin' && name==='rFoot' ){  type = 'cylinder'; w = 3; d = dist; }
                     if( n==='lShin' && name==='lFoot' ){  type = 'cylinder'; w = 3; d = dist; }
 
-
-
-
+                    if( n==='rFoot' && name==='rToes' ){ type = 'box'; w = 4; d = 5; z = 12; r = 0; translate = [ -1, 0, -4 ]; }
+                    if( n==='lFoot' && name==='lToes' ){ type = 'box'; w = 4; d = 5; z = 12; r = 0; translate = [ -1, 0, -4 ]; }
 
 
                     if( type !== null ){
@@ -585,11 +625,14 @@ var simulator = ( function () {
 
             if( mat === null ){
                 mat = {
-                    kinematic: new THREE.MeshBasicMaterial( { color:0x003300, transparent:true, opacity:0.25, wireframe:true } ),
-                    static: new THREE.MeshBasicMaterial( { color:0x000033, transparent:true, opacity:0.25, wireframe:true } ),
-                    //move: new THREE.MeshBasicMaterial( { color:0x330000, transparent:true, opacity:0.25, wireframe:true } )
-                    move: new THREE.MeshStandardMaterial( { color:0xaa4400, shadowSide:false, envMap: environement.envmap } )
+                    kinematic: new THREE.MeshBasicMaterial( { color:0x006600, transparent:true, opacity:0.25, wireframe:true } ),
+                    static: new THREE.MeshBasicMaterial( { color:0x333333, transparent:true, opacity:0.25, wireframe:true } ),
+                    move: new THREE.MeshBasicMaterial( { color:0x330000, transparent:true, opacity:0.25, wireframe:true } ),
                 }
+
+                mat.kinematic.visible = isShow;
+                mat.static.visible = isShow;
+
             }
 
             o.type = o.type === undefined ? 'box' : o.type;
@@ -634,8 +677,10 @@ var simulator = ( function () {
 
             var mesh = null;
             var material;
-            if(isKinematic) material = mat.kinematic;
-            else material = o.mass === 0 ? mat.static: mat.move;
+            if( isKinematic ) material = mat.kinematic;
+            else material = o.mass === 0 ? mat.static : mat.move;
+
+            if( o.material !== undefined ) material = o.material;
 
             if(o.type.substring(0,5) === 'joint') {
 
@@ -701,7 +746,7 @@ var simulator = ( function () {
 
                 mesh.castShadow = true;//false;
                 mesh.receiveShadow = true;//false;
-                if( o.name ) simulator.byName[ o.name ] = mesh;
+                simulator.byName[ mesh.name ] = mesh;
                 return mesh;
 
             }
