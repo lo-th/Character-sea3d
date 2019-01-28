@@ -545,20 +545,22 @@ var simulator = ( function () {
                         mtx.multiplyMatrices( bone.parent.matrixWorld, tmpMtx );
                         mtx.decompose( p, q, s );
 
+                        var mass = (size[0]+size[1]+size[2])*0.1;
+
                         mesh = simulator.add({
 
                             name: n,
+                            mass:mass,
                             type: type,
                             size: size,
                             pos: p.toArray(),
                             quat: q.toArray(),
                             kinematic: kinematic,
-                            mass: kinematic ? 0 : 1,
-                            friction: kinematic ? 0 : 1, 
-                            restitution:0,
+                            friction: 0.5,//kinematic ? 0 : 1, 
+                            restitution:0.1,
 
-                            linear: kinematic ? 0 : 0.5,
-                            angular: kinematic ? 0 : 2,
+                            //linear: kinematic ? 0 : 0.5,
+                            //angular: kinematic ? 0 : 2,
 
                             //group: kinematic ? 1 : 2,
                             //mask: kinematic ? 2 : 1,

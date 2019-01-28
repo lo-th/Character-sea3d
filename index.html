@@ -438,12 +438,12 @@ function physicsTest() {
 
 	physics.addSkeleton();
 
-	physics.add({ type:'box', size:[100,10,100], pos:[0,-4,0], friction:1 });
+	physics.add({ type:'box', size:[80,10,80], pos:[0,-4,0], friction:0.5, restitution:0.2 });
 
 	var material = new THREE.MeshStandardMaterial( { color: 0x505050, envMap:environement.envmap, metalness:0.7, roughness:0.4, transparent:true, opacity:0.5 } );
 
 	var i = 100;
-	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, angular:0.1, material:material });
+	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, restitution:0.2, material:material });//, angular:0.1
 
 	physics.start();
 	physics.extraUpdate = physicsUpdate;
