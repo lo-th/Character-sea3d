@@ -622,7 +622,7 @@ var simulator = ( function () {
 
             if( mat === null ){
                 mat = {
-                    kinematic: new THREE.MeshBasicMaterial( { color:0x006600, transparent:true, opacity:0.25, wireframe:true } ),
+                    kinematic: new THREE.MeshBasicMaterial( { color:0xdb0bfa, transparent:true, opacity:0.25, wireframe:true } ),
                     static: new THREE.MeshBasicMaterial( { color:0x333333, transparent:true, opacity:0.25, wireframe:true } ),
                     move: new THREE.MeshBasicMaterial( { color:0x330000, transparent:true, opacity:0.25, wireframe:true } ),
                 }
