@@ -25,11 +25,13 @@ THREE.BVHLoader.prototype = {
 
 		var scope = this;
 
+		var name = url.substring( url.lastIndexOf('/')+1, url.lastIndexOf('.') );
+
 		var loader = new THREE.FileLoader( scope.manager );
 		loader.setPath( scope.path );
 		loader.load( url, function ( text ) {
 
-			onLoad( scope.parse( text ) );
+			onLoad( scope.parse( text, name ) );
 
 		}, onProgress, onError );
 
@@ -42,7 +44,7 @@ THREE.BVHLoader.prototype = {
 
 	},
 
-	parse: function ( text ) {
+	parse: function ( text, name ) {
 
 		/*
 			reads a string array (lines) from a BVH file
@@ -405,6 +407,7 @@ THREE.BVHLoader.prototype = {
 		toTHREEBone( bones[ 0 ], threeBones );
 
 		var threeClip = toTHREEAnimation( bones );
+		threeClip.name = name;
 
 		return {
 			skeleton: new THREE.Skeleton( threeBones ),

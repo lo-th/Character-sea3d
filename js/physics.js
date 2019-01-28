@@ -116,7 +116,7 @@ var physics = ( function () {
 
                 substep: Option.substep || 2,
                 broadphase: Option.broadphase || 2,
-                soft: Option.soft || false,
+                soft: Option.soft || true,
 
                 //penetration: Option.penetration || 0.0399,
 
@@ -128,8 +128,6 @@ var physics = ( function () {
             worker = new Worker('./worker/ammo.worker.js');
             worker.onmessage = this.message;
             worker.postMessage = worker.webkitPostMessage || worker.postMessage;
-
-            //blob = document.location.href.replace(/\/[^/]*$/,"/") + "./worker/ammo.js";
 
             // test transferrables
             if( Option.noBuffer ) isBuffer = false;
@@ -332,6 +330,12 @@ var physics = ( function () {
 
         },
 
+        getMeshBones: function () {
+
+            return simulator.getMeshBones();
+
+        },
+
         show: function ( b ) {
 
             simulator.show( b );
@@ -389,6 +393,12 @@ var simulator = ( function () {
             });
 
             //simulator.applyPhysicsBone()
+
+        },
+
+        getMeshBones: function (){
+            
+            return meshBones;
 
         },
 
@@ -496,7 +506,8 @@ var simulator = ( function () {
                     if( n==='neck' && name==='head' ){    type = 'box'; size = [ dist, 6, 6 ]; r = 0; }
                     if( n==='chest' && name==='neck' ){   type = 'box'; size = [ dist, 15, 13 ]; r = 0; }
                     if( n==='abdomen' && name==='chest'){ type = 'box'; size = [ dist, 14, 12 ]; r = 0; }
-                    if( n==='hip' && name==='abdomen' ){  type = 'box'; size = [ dist, 13, 11 ]; r = 0; }
+                    //if( n==='hip' && name==='abdomen' ){  type = 'box'; size = [ dist, 13, 11 ]; r = 0; }
+                    if( n==='hip' && name==='abdomen' ){  type = 'capsule'; size = [ 4, 24.4, 4 ]; r = 0; translate = [ 0, 0, 0 ]}
                     // arms
                     if( n==='lCollar' || n==='rCollar' ){    type = 'cylinder'; size = [ 3, dist, 3 ]; }
                     if( n==='rShldr' && name==='rForeArm' ){ type = 'cylinder'; size = [ 3, dist, 3 ]; }
@@ -573,8 +584,6 @@ var simulator = ( function () {
                         mesh.userData.decal = tmpMtx.clone();
                         mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );//tmpMtxInv.clone();
 
-
-
                         mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
                         //mesh.userData.dist = dist;
 
@@ -594,7 +603,7 @@ var simulator = ( function () {
                         
 
                         if( kinematic ) meshBones.push( mesh );
-                        else linkBones.push( mesh );
+                        //else linkBones.push( mesh );
 
                     }
                 }

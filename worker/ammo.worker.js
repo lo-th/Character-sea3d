@@ -39,7 +39,7 @@ var tmpForce = [];//null;
 
 // kinematic
 var tmpMatrix = [];
-
+var tmpFlag = [];
 //var tmpset = null;
 
 // array
@@ -159,6 +159,8 @@ self.onmessage = function ( e ) {
         //case 'matrixArray': tmpMatrix = o; break;
         case 'matrixArray': tmpMatrix = tmpMatrix.concat(o); break;
 
+        case 'setFlag': tmpFlag = tmpFlag.concat(o); break;
+
         //case 'setVehicle': setVehicle( o ); break;
 
         case 'contact': addContact( o ); break;
@@ -182,6 +184,8 @@ function step( o ){
 
     // update matrix
     updateMatrix();
+
+    updateFlag();
 
     // update forces
 
@@ -510,6 +514,26 @@ function applyForce ( r ) {
 
     }
     
+
+}
+
+//---------------------
+// FLAG
+//---------------------
+
+function updateFlag () {
+
+    while( tmpFlag.length > 0 ) applyFlag( tmpFlag.pop() );
+
+}
+
+function applyFlag ( r ) {
+
+    var b = getByName( r[0] );
+    if( b === undefined ) return;
+    if( b === null ) return;
+
+    b.setCollisionFlags( r[1] || 0 );
 
 }
 

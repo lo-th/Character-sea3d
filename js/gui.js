@@ -12,7 +12,7 @@ var buttons = []
 
 
 
-var MENU = [ 'X', 'ANIMATION', 'PHYSICS', 'KINEMATICS' ];
+var MENU = [ 'X', 'VIEW','ANIMATION', 'PHYSICS', 'KINEMATICS' ];
 
 var bone, sx, sy, sz, wx, wy, wz;
 
@@ -54,9 +54,10 @@ gui = {
 
         switch( gui.ID ){
             case 0: gui.close(); break;
-            case 1: gui.animation(); break;
-            case 2: gui.physics(); break;
-            case 3: gui.kinematics(); break;
+            case 1: gui.view(); break;
+            case 2: gui.animation(); break;
+            case 3: gui.physics(); break;
+            case 4: gui.kinematics(); break;
         }
 
         gui.upButton();
@@ -161,6 +162,21 @@ gui = {
 
     //____________________________________________________________
 
+    view: function () {
+
+        current = 'view';
+        var gr0 = ui.add('group', { name:'ENVIRONEMENT', h:30 });
+        gr0.add('button', { name:'river', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.add('button', { name:'studio', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.add('button', { name:'photo', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.add('button', { name:'color', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.add('button', { name:'mit', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.add('button', { name:'street', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.add('button', { name:'night', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        gr0.open();
+    
+    },
+
     animation: function () {
 
     	current = 'animation';
@@ -169,12 +185,28 @@ gui = {
     	timebarre.show();
 
         ui.add('button', { name:'LOAD BVH', h:30, drag:true, p:0 }).onChange( parseAnimation );
+        ui.add('slide', { name:'timescale', min:0.01, max:2, value:1, precision:2, h:30, stype:2, fontColor:selectColor }).onChange( function(v){ character.setTimeScale( v );  } );
 
-        var gr0 = ui.add('group', { name:'MORPH', h:30 });
+
+        var gr0 = ui.add('group', { name:'ANIMATIONS', h:30 });
+
+        for(var m in animations){
+
+            gr0.add('button', { name:m, h:30, p:0 }).onChange( function (){character.play( this.txt );} );
+
+        }
+
+        /*for(var m in animations){
+
+            gr0.add( animations, m, { min:0, max:1, precision:2, h:30, stype:2, fontColor:selectColor }).onChange( applyAnimations );
+
+        }*/
+
+        var gr1 = ui.add('group', { name:'MORPHS', h:30 });
 
         for(var m in morphs){
 
-            gr0.add( morphs, m, { min:0, max:1, precision:2, h:30, stype:2, fontColor:selectColor }).onChange( applyMorphs );
+            gr1.add( morphs, m, { min:0, max:1, precision:2, h:30, stype:2, fontColor:selectColor }).onChange( applyMorphs );
 
         }
 
@@ -192,6 +224,9 @@ gui = {
         ui.add('Bool', { name:'CHARACTER', value:isModel, p:70, inh:16, fontColor:selectColor } ).onChange( showModel );
         ui.add('Bool', { name:'HELPER', value:isHelper, p:70, inh:16, fontColor:selectColor  } ).onChange( showHelper );
         ui.add('Bool', { name:'SHOW LIMIT', value:physics.getShow(), p:70, inh:16, fontColor:selectColor } ).onChange( physics.show );
+
+
+        ui.add('button', { name:'TEST', p:0, h:30 }).onChange( physicsHack );
 
 
     },

@@ -2,6 +2,8 @@ function Eyes ( option ) {
 
 	THREE.Object3D.call( this );
 
+	this.imgLoader = new THREE.TextureLoader();
+
 	this.inner = new THREE.Group();
 	this.add( this.inner );
 
@@ -98,17 +100,28 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 	},
 
+	setEnvmap: function (name) {
+
+		var textureEnv = this.imgLoader.load( './assets/textures/envmap/'+name+'.jpg' );
+		textureEnv.wrapS = THREE.RepeatWrapping;
+		textureEnv.offset.x = -0.25;
+
+		if(this.material){
+			this.material.uniforms.texEnvRfl.value = textureEnv;
+			this.material.uniforms.texEnvDif.value = textureEnv;
+		}
+
+	},
+
 	makeMaterial: function (){
 
-		var loader = new THREE.TextureLoader();
-
-		var textureColor = loader.load( './assets/textures/eye/eye_c.jpg' );
-		var textureNormal = loader.load( './assets/textures/eye/eye_n.jpg' );
-		var textureEnv = loader.load( './assets/textures/'+envName+'.jpg' );
+		var textureColor = this.imgLoader.load( './assets/textures/eye/eye_c.jpg' );
+		var textureNormal = this.imgLoader.load( './assets/textures/eye/eye_n.jpg' );
+		var textureEnv = this.imgLoader.load( './assets/textures/envmap/'+envName+'.jpg' );
 		textureEnv.wrapS = THREE.RepeatWrapping;
 		textureEnv.offset.x = -0.25;
 		//var textureEnv2 = loader.load( './assets/textures/studio_low.jpg' );
-		var textureRfc = loader.load( './assets/textures/eye/rfc.png' );
+		var textureRfc = this.imgLoader.load( './assets/textures/eye/rfc.png' );
 
 		textureColor.minFilter = textureColor.magFilter = THREE.LinearFilter;
 		textureNormal.minFilter = textureNormal.magFilter = THREE.LinearFilter;
