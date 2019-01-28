@@ -401,6 +401,7 @@ var simulator = ( function () {
 
         show: function ( b ) {
 
+            isShow = b;
             if( mat === null ) return;
             mat.kinematic.visible = b;
             mat.static.visible = b;
@@ -445,6 +446,8 @@ var simulator = ( function () {
         addSkeleton: function () {
 
             if( isSkeleton ) return;
+
+            var fingers = [ 'Thumb', 'Index', 'Mid', 'Ring', 'Pinky' ];
 
             // get character bones 
             var bones = character.skeleton.bones;
@@ -501,6 +504,15 @@ var simulator = ( function () {
                     if( n==='rForeArm' && name==='rHand' ){  type = 'cylinder'; size = [ 2.6, dist, 2.6 ]; }
                     if( n==='lForeArm' && name==='lHand' ){  type = 'cylinder'; size = [ 2.6, dist, 2.6 ]; }
                     // hand
+                    if( n==='rHand' && name==='rMid1' ){  type = 'box'; size = [ dist, 2, 4 ]; r = -5; translate = [ -dist * 0.5, 0.5, 0 ]}
+                    if( n==='lHand' && name==='lMid1' ){  type = 'box'; size = [ dist, 2, 4 ]; r = 5; translate = [ -dist * 0.5, -0.5, 0 ]}
+                    // fingers
+                    var f = n.substring( 1, n.length-1 );
+                    var fnum = 4 - Number(n.substring( n.length-1 ));
+                    if( fingers.indexOf(f) !== -1 ){
+                        var s = f === 'Thumb' ? 1+(fnum*0.25) : s = 1+(fnum*0.1);
+                        type = 'box'; size = [ dist, s, s ]; r=0; 
+                    }
 
                     // legs
                     if( n==='rThigh' && name==='rShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
@@ -508,8 +520,10 @@ var simulator = ( function () {
                     if( n==='rShin' && name==='rFoot' ){  type = 'cylinder'; size = [ 3, dist, 3 ]; }
                     if( n==='lShin' && name==='lFoot' ){  type = 'cylinder'; size = [ 3, dist, 3 ]; }
                     // foot
-                    if( n==='rFoot' && name==='rToes' ){ type = 'box'; size = [ 4, 5, 12 ]; r = 0; translate = [ -1, 0, -4 ]; }
-                    if( n==='lFoot' && name==='lToes' ){ type = 'box'; size = [ 4, 5, 12 ]; r = 0; translate = [ -1, 0, -4 ]; }
+                    if( n==='rFoot' && name==='rToes' ){ type = 'box'; size = [ 4, 5, 9 ]; r = 0; translate = [ -1, 0, -2.5 ]; }
+                    if( n==='lFoot' && name==='lToes' ){ type = 'box'; size = [ 4, 5, 9 ]; r = 0; translate = [ -1, 0, -2.5 ]; }
+                    if( n==='rToes' ){ type = 'box'; size = [ dist+1, 5, 3 ]; r = 0; translate = [ (-dist * 0.5)-0.5, 0, -1.5 ];}
+                    if( n==='lToes' ){ type = 'box'; size = [ dist+1, 5, 3 ]; r = 0; translate = [ (-dist * 0.5)-0.5, 0, -1.5 ];}
 
 
                     if( type !== null ){
@@ -621,16 +635,19 @@ var simulator = ( function () {
             }
 
             if( mat === null ){
+
                 mat = {
                     kinematic: new THREE.MeshBasicMaterial( { color:0xdb0bfa, transparent:true, opacity:0.25, wireframe:true } ),
                     static: new THREE.MeshBasicMaterial( { color:0x333333, transparent:true, opacity:0.25, wireframe:true } ),
                     move: new THREE.MeshBasicMaterial( { color:0x330000, transparent:true, opacity:0.25, wireframe:true } ),
                 }
 
-                mat.kinematic.visible = isShow;
-                mat.static.visible = isShow;
+                
 
             }
+
+            mat.kinematic.visible = isShow;
+            mat.static.visible = isShow;
 
             o.type = o.type === undefined ? 'box' : o.type;
 
