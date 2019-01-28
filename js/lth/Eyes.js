@@ -28,6 +28,8 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 				texEnvRfl: { value: null },
 				texEnvDif: { value: null },
 				texEnvRfr: { value: null },
+
+				lightPosition: { value: light.position.clone().normalize() },
 				
 				pupil_size:				{ value: 0.2 },	  // pupil resting size
 				iris_tex_start:			{ value: 0.009 }, // V coordinate in texture where the iris color begins
@@ -78,8 +80,10 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 		var textureColor = loader.load( './assets/textures/eye/eye_c.jpg' );
 		var textureNormal = loader.load( './assets/textures/eye/eye_n.jpg' );
-		var textureEnv = loader.load( './assets/textures/river.jpg' );
-		var textureEnv2 = loader.load( './assets/textures/river_low.jpg' );
+		var textureEnv = loader.load( './assets/textures/studio.jpg' );
+		textureEnv.wrapS = THREE.RepeatWrapping;
+		textureEnv.offset.x = -0.25;
+		//var textureEnv2 = loader.load( './assets/textures/studio_low.jpg' );
 		var textureRfc = loader.load( './assets/textures/eye/rfc.png' );
 
 		textureColor.minFilter = textureColor.magFilter = THREE.LinearFilter;
@@ -92,7 +96,7 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 		this.material.uniforms.texEyeCol.value = textureColor;
 		this.material.uniforms.texEyeNrm.value = textureNormal;
 		this.material.uniforms.texEnvRfl.value = textureEnv;
-		this.material.uniforms.texEnvDif.value = textureEnv2;
+		this.material.uniforms.texEnvDif.value = textureEnv;//textureEnv2;
 		this.material.uniforms.texEnvRfr.value = textureRfc;
 
 		this.makeMesh();

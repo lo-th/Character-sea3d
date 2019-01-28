@@ -16,8 +16,8 @@ var MENU = [ 'X', 'ANIMATION', 'PHYSICS', 'KINEMATICS' ];
 
 var bone, sx, sy, sz, wx, wy, wz;
 
-var hb = 14;
-var hc = '#929292';
+//var hb = 14;
+//var hc = '#929292';
 
 var meshDisplay = [];
 
@@ -25,7 +25,7 @@ var bs, cam, camInfo = {};
 
 var selectColor = '#db0bfa'
 var over = 'rgba(153,153,153,0.3)'
-var selected = 'rgba(0,0,0,0.3)'
+var selected = 'rgba(80,80,80,0.3)'
 var out = 'none';
 
 
@@ -92,7 +92,7 @@ gui = {
         gender.style.cssText = 'position: absolute; bottom:50px; left:10px; pointer-events:auto; width:60px; height:90px; cursor:pointer;';
 
         topText = document.createElement( 'div' );
-        topText.style.cssText = 'position: absolute; top:0px; right:0px; color:#CCC; font-size: 14px; margin:0px 0px; padding: 0px 15px; line-height:40px; pointer-events:none; width:60px; height:40px; text-align: center; ';
+        topText.style.cssText = 'position: absolute; top:0px; right:0px; color:#000; font-size: 14px; margin:0px 0px; padding: 0px 15px; line-height:40px; pointer-events:none; width:60px; height:40px; text-align: center; ';
 
         mainMenu = document.createElement( 'div' );
         mainMenu.style.cssText = 'position:absolute; top:40px; right:0; pointer-events:none; width:200px;';
@@ -109,7 +109,11 @@ gui = {
 
         for( var i = 0; i < MENU.length; i++ ) this.addButton(i);
 
-        UIL.Tools.setText( 12, '#CCC', 'Consolas, Monaco, monospace' );
+        UIL.Tools.setText( 12, '#000', 'Consolas, Monaco, monospace' );
+        UIL.Tools.colors.backgroundOver = 'rgba(255,255,255,0.1)';
+        UIL.Tools.colors.button = 'rgba(80,80,80,0.3)';
+        UIL.Tools.colors.select = selectColor;
+        UIL.Tools.colors.boolbg = 'rgba(255,255,255,0.1)';
         ui = new UIL.Gui( { w:250, bg:'rgba(23,23,23,0)', close:false, parent:mainMenu, top:50, css:'right:0;' } );
 
     },
@@ -123,12 +127,12 @@ gui = {
     addButton: function ( i ) {
 
         var b = document.createElement('div');
-        b.style.cssText =  'color:#CCC;  font-size: 14px;  margin:0px 0px; padding: 0px 15px; line-height:40px; position:relative; pointer-events:auto; height:40px; display:inline-block; text-align:center; cursor:pointer; transition:all 0.3s ease;';
+        b.style.cssText =  'color:#000;  font-size: 14px;  margin:0px 0px; padding: 0px 15px; line-height:40px; position:relative; pointer-events:auto; height:40px; display:inline-block; text-align:center; cursor:pointer; transition:all 0.3s ease;';
         b.textContent = MENU[i];
         b.id = i;
 
         b.addEventListener( 'mouseover', function(e){ this.style.color = '#FFF'; this.style.background = over; }, false );
-        b.addEventListener( 'mouseout', function(e){ this.style.color = '#CCC'; if( gui.ID === Number(this.id) && gui.ID !== 0 ) this.style.background = selected; else this.style.background = out; }, false );
+        b.addEventListener( 'mouseout', function(e){ this.style.color = '#000'; if( gui.ID === Number(this.id) && gui.ID !== 0 ) this.style.background = selected; else this.style.background = out; }, false );
         b.addEventListener( 'click', function(e){ gui.select( this.id ); }, false );
 
         buttons.push( b );
@@ -164,13 +168,13 @@ gui = {
     	timebarre.setReference( character );
     	timebarre.show();
 
-        ui.add('button', { name:'LOAD BVH', fontColor:'#D4B87B', h:30, drag:true, p:0 }).onChange( parseAnimation );
+        ui.add('button', { name:'LOAD BVH', h:30, drag:true, p:0 }).onChange( parseAnimation );
 
         var gr0 = ui.add('group', { name:'MORPH', h:30 });
 
         for(var m in morphs){
 
-            gr0.add( morphs, m, { min:0, max:1, precision:2, h:30, stype:2 }).onChange( applyMorphs );
+            gr0.add( morphs, m, { min:0, max:1, precision:2, h:30, stype:2, fontColor:selectColor }).onChange( applyMorphs );
 
         }
 
@@ -185,7 +189,9 @@ gui = {
 
         ui.add('button', { name:'START', p:0, h:30 }).onChange( initPhysics );
         ui.add('button', { name:'RESET', p:0, h:30 }).onChange( physics.reset );
-        ui.add('Bool', { name:'SHOW LIMIT', value:physics.getShow(), p:70, bColor:hc, inh:hb } ).onChange( physics.show );
+        ui.add('Bool', { name:'CHARACTER', value:isModel, p:70, inh:16, fontColor:selectColor } ).onChange( showModel );
+        ui.add('Bool', { name:'HELPER', value:isHelper, p:70, inh:16, fontColor:selectColor  } ).onChange( showHelper );
+        ui.add('Bool', { name:'SHOW LIMIT', value:physics.getShow(), p:70, inh:16, fontColor:selectColor } ).onChange( physics.show );
 
 
     },
@@ -208,8 +214,8 @@ var Timebarre = function( p, sel ){
 
     this.select = sel;
 
-    this.playIcon = "<svg width='18px' height='17px'><path fill='#CCC' d='M 14 8 L 5 3 4 4 4 13 5 14 14 9 14 8 Z'/></svg>";
-    this.pauseIcon = "<svg width='18px' height='17px'><path fill='#CCC' d='M 14 4 L 13 3 11 3 10 4 10 13 11 14 13 14 14 13 14 4 M 8 4 L 7 3 5 3 4 4 4 13 5 14 7 14 8 13 8 4 Z'/></svg>";
+    this.playIcon = "<svg width='18px' height='17px'><path fill='#000' d='M 14 8 L 5 3 4 4 4 13 5 14 14 9 14 8 Z'/></svg>";
+    this.pauseIcon = "<svg width='18px' height='17px'><path fill='#000' d='M 14 4 L 13 3 11 3 10 4 10 13 11 14 13 14 14 13 14 4 M 8 4 L 7 3 5 3 4 4 4 13 5 14 7 14 8 13 8 4 Z'/></svg>";
 
     this.playing = true;
 
@@ -228,23 +234,23 @@ var Timebarre = function( p, sel ){
     this.parent.appendChild( this.content );
 
     this.timeInfo = document.createElement('div');
-    this.timeInfo.style.cssText = "position:absolute; bottom:36px; left:60px; width:200px; height:10px; pointer-events:none; color:#CCC; ";
+    this.timeInfo.style.cssText = "position:absolute; bottom:36px; left:60px; width:200px; height:10px; pointer-events:none; color:#000; ";
     this.content.appendChild(this.timeInfo);
 
     this.timeline = document.createElement('div');
-    this.timeline.style.cssText = "position:absolute; bottom:20px; left:60px; width:"+this.width+"px; height:5px; border:3px solid rgba(255,255,255,0.2); pointer-events:auto; cursor:pointer;";
+    this.timeline.style.cssText = "position:absolute; bottom:20px; left:60px; width:"+this.width+"px; height:5px; border:3px solid rgba(0,0,0,0.2); pointer-events:auto; cursor:pointer;";
     this.content.appendChild(this.timeline);
 
     this.framer = document.createElement('div');
-    this.framer.style.cssText = "position:absolute; top:0px; left:0px; width:1px; height:5px; background:#CCC; pointer-events:none;";
+    this.framer.style.cssText = "position:absolute; top:0px; left:0px; width:1px; height:5px; background:#000; pointer-events:none;";
     this.timeline.appendChild(this.framer);
 
     this.playButton = document.createElement('div');
-    this.playButton.style.cssText = "position:absolute; top:5px; left:10px; width:18px; height:18px; pointer-events:auto; cursor:pointer; border:3px solid rgba(255,255,255,0.2); padding: 5px 5px;";
+    this.playButton.style.cssText = "position:absolute; top:5px; left:10px; width:18px; height:18px; pointer-events:auto; cursor:pointer; border:3px solid rgba(0,0,0,0.2); padding: 5px 5px;";
     this.content.appendChild( this.playButton );
 
     this.playButton.innerHTML = this.playing ? this.playIcon : this.pauseIcon;
-    this.playButton.childNodes[0].childNodes[0].setAttribute('fill', '#CCC');
+    this.playButton.childNodes[0].childNodes[0].setAttribute('fill', '#000');
 
 
 
@@ -307,7 +313,7 @@ Timebarre.prototype = {
 
         //this.playButton.style.border = "1px solid #3f3f3f";
         //this.playButton.style.background = 'none';
-        this.playButton.childNodes[0].childNodes[0].setAttribute('fill', '#CCC');
+        this.playButton.childNodes[0].childNodes[0].setAttribute('fill', '#000');
 
     },
 
@@ -358,7 +364,7 @@ Timebarre.prototype = {
 
     tOut: function( e ) {
 
-        if(!this.down) this.framer.style.background = "#CCC";
+        if(!this.down) this.framer.style.background = "#000";
 
     },
 
@@ -371,7 +377,7 @@ Timebarre.prototype = {
     tUp: function ( e ) {
 
         this.down = false;
-        this.framer.style.background = "#CCC";
+        this.framer.style.background = "#000";
 
     },
 

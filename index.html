@@ -20,11 +20,8 @@ body {
 	font-family: Consolas, Monaco, monospace;
     font-size: 12px; 
     margin: 0; padding: 0; border: 0;
-    background: #808080;
-    color:#FFF;
-    background: url("./assets/textures/bg.png") no-repeat center center fixed;;
-    background-size: cover;
-    background-size: 100% 100%;
+    background: #a8a8aa;
+    color:#000;
     overflow: hidden;
 }
 </style>
@@ -62,7 +59,7 @@ body {
 
 var random = THREE.Math.randInt;
 
-var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader, eyes, environement;
+var clock, camera, scene, renderer, controler, textureLoader, ground, bvhLoader, light, eyes, environement;
 var count1 = 0;
 var nextBlink = random(200,600); 
 var meshs = {};
@@ -76,6 +73,11 @@ var character = null;
 // for all physics object
 var physicsGroup = null;
 
+
+var helper = null;
+var isHelper = false;
+var isModel = true;
+
 init();
 animate();
 addGroundAndLight();
@@ -85,13 +87,13 @@ function init() {
 
 	clock = new THREE.Clock();
 
-	renderer = new THREE.WebGLRenderer( { antialias: true, alpha:true } );
+	renderer = new THREE.WebGLRenderer( { antialias: true, alpha:false } );
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.shadowMap.enabled = true;
     renderer.shadowMap.soft = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor( 0x606060, 0 );
+    renderer.setClearColor( 0xa8a8aa, 1 );
 
     renderer.gammaInput = true;
     renderer.gammaOutput = true;
@@ -106,8 +108,8 @@ function init() {
 	physicsGroup = new THREE.Group();
 	scene.add( physicsGroup );
 
-	camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
-	camera.position.set( 0, 60, 160 );
+	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+	camera.position.set( 0, 60, 120 );
 
 	controler = new THREE.OrbitControls( camera, renderer.domElement );
 	controler.target.set( 0, 40, 0 );
@@ -125,7 +127,7 @@ function init() {
 
 	// create hdr environement
     environement = new Environement( renderer, scene );
-    environement.background = false;
+    //environement.background = false;
 
 	// init interface
 	gui.init();
@@ -182,9 +184,8 @@ function addGroundAndLight () {
 	var ambient = new THREE.HemisphereLight( 0x601010, 0xDDEEFF, 0.1 );
 	scene.add( ambient );
 
-	var light = new THREE.DirectionalLight( 0xffffef, 0.75 );
-	light.position.set(-0.414, 1, 0.804 ).multiplyScalar(200);
-    //light.position.set( 50, 300, 200 );
+	light = new THREE.DirectionalLight( 0xffffff, 1 );
+	light.position.set( 0.3, 1, 0.5 ).multiplyScalar( 200 );
     
     light.shadow = new THREE.LightShadow( new THREE.OrthographicCamera( 300, -300, 300, -300,  100, 600 ) );
     light.shadow.mapSize.width = light.shadow.mapSize.height = 1024;    
@@ -193,9 +194,12 @@ function addGroundAndLight () {
     light.castShadow = true;
     scene.add( light );
 
-    var hemiLight = new THREE.HemisphereLight( 0x4b678f, 0x887868, 0.5 );
+    var sph = new THREE.Mesh(new THREE.SphereBufferGeometry( 1, 24, 18 ), new THREE.MeshBasicMaterial( { color:0x006600, transparent:true, opacity:0.5, wireframe:true } ))
+    light.add(sph)
+
+    /*var hemiLight = new THREE.HemisphereLight( 0x4b678f, 0x887868, 0.5 );
 	hemiLight.position.set( 0, 50, 0 );
-	scene.add( hemiLight );
+	scene.add( hemiLight );*/
 
 	var groundMaterial = new THREE.ShadowMaterial({ opacity:0.3, depthTest:true, depthWrite:false });
 	ground = new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 ), groundMaterial );
@@ -406,7 +410,7 @@ function attachToBone ( mesh, boneName ){
 
 function loadEnvMap (){
 
-    environement.load('./assets/textures/river.jpg', endLoadEnvMap );
+    environement.load('./assets/textures/studio.jpg', endLoadEnvMap );
 
 }
 
@@ -438,7 +442,7 @@ function physicsTest() {
 
 	var material = new THREE.MeshStandardMaterial( { color: 0x505050, envMap:environement.envmap, metalness:0.7, roughness:0.4, transparent:true, opacity:0.5 } );
 
-	var i = 200;
+	var i = 100;
 	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, angular:0.1, material:material });
 
 	physics.start();
@@ -462,6 +466,37 @@ function physicsUpdate() {
 
 }
 
+// _____________________________ skeleton helper
+
+function showModel() {
+
+    if( isModel ) isModel = false;
+    else isModel = true;
+    materials.body.depthTest = materials.head.depthTest = isModel;
+	materials.body.depthWrite = materials.head.depthWrite = isModel;
+	materials.body.transparent = materials.head.transparent = isModel ? false : true;
+	materials.body.opacity = materials.head.opacity = isModel ? 1 : 0.1;
+	materials.head_plus.visible = isModel;
+
+}
+
+function showHelper() {
+
+    if( isHelper ){
+
+        scene.remove( helper );
+        helper = null;
+        isHelper = false;
+
+    } else {
+
+        helper = new THREE.SkeletonHelper( character );
+        scene.add( helper );
+        isHelper = true;
+
+    }
+
+}
 
 </script>
 </body>

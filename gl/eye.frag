@@ -22,12 +22,16 @@ varying vec3 vNormal;
 uniform mat3 normalMatrix;
 uniform mat4 modelMatrix;
 
+
+
 // material uniforms
 uniform sampler2D texEyeCol;		
 uniform sampler2D texEyeNrm;
 uniform sampler2D texEnvRfl;
 uniform sampler2D texEnvDif;
 uniform sampler2D texEnvRfr;
+
+uniform vec3 lightPosition;
 
 uniform float pupil_size;
 uniform float iris_tex_start;
@@ -268,8 +272,8 @@ void main(){
 		fNormalSpec = vec3( viewMatrix * vec4( fNormalSpec, 0.0 ));
 		
 		//vec3 directionalLightDirection = vec3( -1.0, 1.75, 1.0 );	
-		vec3 directionalLightDirection = vec3( -0.414, 1.0, 0.804 );			
-		vec3 dirLgtVector = normalize( vec3( viewMatrix * vec4( directionalLightDirection, 0.0 )));
+		//vec3 directionalLightDirection = vec3( -0.414, 1.0, 0.804 );			
+		vec3 dirLgtVector = normalize( vec3( viewMatrix * vec4( lightPosition, 0.0 )));
 		//diffuse
 		float diffuse = max( dot( fNormalDiff, dirLgtVector ), 0.0 ) * 0.6;
 		//spec

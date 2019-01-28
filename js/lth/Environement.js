@@ -59,7 +59,6 @@ Environement.prototype = {
 
             texture = new THREE.DataTexture( o.data, o.width, o.height, o.format, o.type, 300, 1001, 1001, THREE.NearestFilter, THREE.NearestFilter, 1, THREE.RGBEEncoding )
             texture.encoding = THREE.RGBEEncoding;
-            
             texture.needsUpdate = true;
             this.update( texture );
 
@@ -127,7 +126,13 @@ Environement.prototype = {
 
         this.envmap.dispose();
 
-        if( texture !== undefined ) this.renderMaterial.uniforms.map.value = texture;
+        if( texture !== undefined ){ 
+            texture.wrapS = THREE.RepeatWrapping;
+            //texture.offset.x = 0.5;
+            //texture.needsUpdate = true;
+            this.renderMaterial.uniforms.map.value = texture;
+            this.renderMaterial.uniforms.offset.value = -0.25;
+        }
         this.renderMaterial.uniforms.isHdr.value = this.isHdr ? 1 : 0;
         this.renderMaterial.uniforms.data.value = this.data;
 
@@ -166,6 +171,7 @@ Environement.prototype = {
 var skyMat = {
     uniforms:{
         map: { value: null },
+        offset: { value: 0 },
         decode: { value: 0 },
         isHdr: { value: 1 },
         rev: { value: 0 },
@@ -236,6 +242,15 @@ var skyMat = {
 
     '}',
 
+    'vec4 toHDRX( in vec4 c ) {',
+        'vec3 v = c.rgb;',
+        //'v = pow( abs(v), vec3(2.2) );',
+        //'v = pow( abs(v), vec3(2.2) );',
+        //'v = v * 10.0;', 
+        'v = pow( abs(v), vec3(1.6));',// exposure and gamma increase to match HDR
+        'return ToRGBE( vec4(v.r, v.g, v.b, 1.0) );',
+    '}',
+
     'vec4 HdrEncode(vec3 value) {',
 		//'value = value / 65536.0;',
 		'vec3 exponent = clamp(ceil(log2(value)), -128.0, 127.0);',
@@ -249,6 +264,7 @@ var skyMat = {
     'uniform int decode;',
     'uniform int isHdr;',
     'uniform int rev;',
+    'uniform float offset;',
     'varying vec2 vUv;',
 
     
@@ -256,8 +272,10 @@ var skyMat = {
 
         'int flip = isHdr;',
         'vec2 uVx = vec2( rev == 1 ? 0.5 - vUv.x : vUv.x, flip == 1 ? 1.0 - vUv.y : vUv.y );',
+        'uVx.x += offset;',
         'vec4 c = texture2D( map, uVx );',
-        'vec4 color = isHdr == 1 ? c : toHDR( Filters( c, data[0], data[1], data[2], data[3] ) * Filters( c, data[4], data[5], data[6], data[7] ) );',
+        //'vec4 color = isHdr == 1 ? c : toHDR( Filters( c, data[0], data[1], data[2], data[3] ) * Filters( c, data[4], data[5], data[6], data[7] ) );',
+        'vec4 color = isHdr == 1 ? c : toHDRX( c );',
         'gl_FragColor = decode == 1 ? RGBEToLinear( color ) : color;',
      
     '}'

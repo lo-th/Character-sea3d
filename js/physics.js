@@ -76,7 +76,7 @@ var physics = ( function () {
 
             var xhr = new XMLHttpRequest(); 
             xhr.responseType = "arraybuffer";
-            xhr.open('GET', "./worker/ammo.hex", true);
+            xhr.open( 'GET', "./worker/ammo.hex", true );
 
             xhr.onreadystatechange = function () {
 
@@ -463,8 +463,8 @@ var simulator = ( function () {
 
             var p1 = new THREE.Vector3();
             var p2 = new THREE.Vector3();
-            var i, lng = bones.length, name, n, bone, child, o, type, mesh, r, kinematic, translate, parentName;
-            var size, dist;
+            var i, lng = bones.length, name, n, bone, child, o, parentName;
+            var size, dist, type, mesh, r, kinematic, translate;
 
             for( i = 0; i < lng; i++ ){
 
@@ -490,15 +490,18 @@ var simulator = ( function () {
 
                     // body
                     if( n==='head' ){ type = 'capsule'; size = [ 7, dist, 7 ]; r = 90; }
-                    if( n==='chest' && name==='neck' ){ type = 'box'; size = [ dist, 15, 13 ]; r = 0; }
+                    if( n==='neck' && name==='head' ){    type = 'box'; size = [ dist, 6, 6 ]; r = 0; }
+                    if( n==='chest' && name==='neck' ){   type = 'box'; size = [ dist, 15, 13 ]; r = 0; }
                     if( n==='abdomen' && name==='chest'){ type = 'box'; size = [ dist, 14, 12 ]; r = 0; }
-                    if( n==='hip' && name==='abdomen' ){ type = 'box'; size = [ dist, 13, 11 ]; r = 0; }
+                    if( n==='hip' && name==='abdomen' ){  type = 'box'; size = [ dist, 13, 11 ]; r = 0; }
                     // arms
                     if( n==='lCollar' || n==='rCollar' ){    type = 'cylinder'; size = [ 3, dist, 3 ]; }
                     if( n==='rShldr' && name==='rForeArm' ){ type = 'cylinder'; size = [ 3, dist, 3 ]; }
                     if( n==='lShldr' && name==='lForeArm' ){ type = 'cylinder'; size = [ 3, dist, 3 ]; }
-                    if( n==='rForeArm' && name==='rHand' ){  type = 'cylinder'; size = [ 2, dist, 2 ]; }
-                    if( n==='lForeArm' && name==='lHand' ){  type = 'cylinder'; size = [ 2, dist, 2 ]; }
+                    if( n==='rForeArm' && name==='rHand' ){  type = 'cylinder'; size = [ 2.6, dist, 2.6 ]; }
+                    if( n==='lForeArm' && name==='lHand' ){  type = 'cylinder'; size = [ 2.6, dist, 2.6 ]; }
+                    // hand
+
                     // legs
                     if( n==='rThigh' && name==='rShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
                     if( n==='lThigh' && name==='lShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
@@ -608,8 +611,8 @@ var simulator = ( function () {
                     plane:    new THREE.PlaneBufferGeometry(1,1,1,1),
                     box:      new THREE.BoxBufferGeometry(1,1,1),
                     cone:     new THREE.CylinderBufferGeometry( 0,1,0.5 ),
-                    sphere:   new THREE.SphereBufferGeometry( 1, 32, 24 ),//16, 12
-                    cylinder: new THREE.CylinderBufferGeometry( 1,1,1,12,2 ),
+                    sphere:   new THREE.SphereBufferGeometry( 1, 24, 18 ),//16, 12
+                    cylinder: new THREE.CylinderBufferGeometry( 1,1,1, 12, 1 ),
 
                 }
 
