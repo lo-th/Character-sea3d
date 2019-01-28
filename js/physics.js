@@ -492,7 +492,7 @@ var simulator = ( function () {
                     kinematic = true;
 
                     // body
-                    if( n==='head' ){ type = 'capsule'; size = [ 7, dist, 7 ]; r = 90; }
+                    if( n==='head' ){ type = 'capsule'; size = [ 7.5, 8.6, 7.5 ]; r = 90; }
                     if( n==='neck' && name==='head' ){    type = 'box'; size = [ dist, 6, 6 ]; r = 0; }
                     if( n==='chest' && name==='neck' ){   type = 'box'; size = [ dist, 15, 13 ]; r = 0; }
                     if( n==='abdomen' && name==='chest'){ type = 'box'; size = [ dist, 14, 12 ]; r = 0; }

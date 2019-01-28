@@ -2,22 +2,46 @@ function Eyes ( option ) {
 
 	THREE.Object3D.call( this );
 
-	this.inner = new THREE.Object3D();
-	this.add(this.inner);
+	this.inner = new THREE.Group();
+	this.add( this.inner );
 
 	var torad = THREE.Math.DEG2RAD;
 	this.inner.rotation.set( 180*torad, 0*torad, 90*torad );
+	this.inner.position.set( -9.44 ,0, -4.85);
 
 	this.option = option || {
-		pos:[2.64,9.44,4.85],
+		pos:[2.64,0,0],
 		radius: 1.4, 
 	};
+
+	this.target = new THREE.Group();
+	this.inner.add( this.target );
+
+	this.looker = new THREE.Vector3(1,0,0)
+
+	this.isReady = false;
 	
 	this.load("./gl/eye");
 	
 }
 
 Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
+
+	look: function ( v ) {
+
+		if(!this.isReady) return;
+
+		this.target.position.set((v.x*40), (v.y*30), 100);
+
+		var m = new THREE.Matrix4();
+
+        m.lookAt( this.target.position.clone().add(new THREE.Vector3(0,-2,0)), this.eye_L.position, this.eye_L.up );
+        this.eye_L.quaternion.setFromRotationMatrix( m );
+
+        m.lookAt( this.target.position.clone().add(new THREE.Vector3(0,2,0)), this.eye_R.position, this.eye_R.up );
+        this.eye_R.quaternion.setFromRotationMatrix( m );
+
+	},
 
 	load: function ( url ) {
 
@@ -80,7 +104,7 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 		var textureColor = loader.load( './assets/textures/eye/eye_c.jpg' );
 		var textureNormal = loader.load( './assets/textures/eye/eye_n.jpg' );
-		var textureEnv = loader.load( './assets/textures/studio.jpg' );
+		var textureEnv = loader.load( './assets/textures/'+envName+'.jpg' );
 		textureEnv.wrapS = THREE.RepeatWrapping;
 		textureEnv.offset.x = -0.25;
 		//var textureEnv2 = loader.load( './assets/textures/studio_low.jpg' );
@@ -117,6 +141,8 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 		this.inner.add( this.eye_L );
 		this.inner.add( this.eye_R );
+
+		this.isReady = true;
 
 	},
 
