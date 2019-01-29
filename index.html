@@ -523,6 +523,9 @@ var isK = true;
 function physicsHack() {
 
 	var bodys = physics.getMeshBones();
+
+	if( bodys === null ) return;
+
 	var i = bodys.length, b;
 
 	if(isK) isK = false;

@@ -397,7 +397,7 @@ var simulator = ( function () {
         },
 
         getMeshBones: function (){
-            
+            if(!physicsSkeleton) return null;
             return physicsSkeleton.nodes;
 
         },
