@@ -58,8 +58,6 @@ var physics = ( function () {
 
     var meshData = [];
 
-    
-
 
     physics = {
 
@@ -363,8 +361,8 @@ var simulator = ( function () {
     var solids = [];
     var extraGeo = [];
 
-    var meshBones = [];
-    var linkBones = [];
+    //var meshBones = [];
+    //var linkBones = [];
 
     var geo = null;
     var mat = null;
@@ -374,6 +372,8 @@ var simulator = ( function () {
 
     var isSkeleton = false;
     var isShow = false;
+
+    var physicsSkeleton = null;
 
     simulator = {
 
@@ -398,7 +398,7 @@ var simulator = ( function () {
 
         getMeshBones: function (){
             
-            return meshBones;
+            return physicsSkeleton.nodes;
 
         },
 
@@ -432,30 +432,29 @@ var simulator = ( function () {
             while( bodys.length > 0 ) physicsGroup.remove( bodys.pop() );
             while( solids.length > 0 ) physicsGroup.remove( solids.pop() );
 
-            meshBones = [];
+            //meshBones = [];
+
+            scene.remove( physicsSkeleton );
+            physicsSkeleton.clear();
+
+
+
             isSkeleton = false;
 
         },
 
         getSkeletontMatrix: function () {
-            
-            var r = [];
 
-            if( !meshBones.length ) return r;
-
-            meshBones.forEach( function( b ) {
-
-                if( b.userData.isKinematic ) r.push( b.userData.matrix );
-
-            });
-
-            return r;
+            if(!physicsSkeleton) return [];
+            return physicsSkeleton.upMtx;
 
         },
 
         addSkeleton: function () {
 
             if( isSkeleton ) return;
+
+            var meshBones = [];
 
             var fingers = [ 'Thumb', 'Index', 'Mid', 'Ring', 'Pinky' ];
 
@@ -573,8 +572,8 @@ var simulator = ( function () {
                             //linear: kinematic ? 0 : 0.5,
                             //angular: kinematic ? 0 : 2,
 
-                            //group: kinematic ? 1 : 2,
-                            //mask: kinematic ? 2 : 1,
+                            group: kinematic ? 2 : 1,
+                            mask: kinematic ? 1 : 2,
 
                             neverSleep: true,
 
@@ -583,26 +582,27 @@ var simulator = ( function () {
                         mesh.userData.isKinematic = kinematic;
                         mesh.userData.decal = tmpMtx.clone();
                         mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );//tmpMtxInv.clone();
+                        mesh.userData.bone = bone.parent;
 
-                        mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
+                        //mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
                         //mesh.userData.dist = dist;
 
                         //mesh.userData.top = bone.parent.position.clone();
                         //mesh.userData.quat = bone.parent.quaternion.clone().multiply(revQ).normalize();
 
-                        mesh.userData.bone = bone.parent;
-                        mesh.userData.parentName = parentName;
+                        
+                        //mesh.userData.parentName = parentName;
 
-                        bone.parent.userData.mesh = mesh;
-                        bone.parent.userData.isPhysics = true;
-                        bone.parent.userData.isKinematic = kinematic;
+                        //bone.parent.userData.mesh = mesh;
+                        //bone.parent.userData.isPhysics = true;
+                        //bone.parent.userData.isKinematic = kinematic;
 
                         //bone.userData.mesh = mesh;
                         //bone.userData.isPhysics = true;
                         //bone.userData.isKinematic = kinematic;
                         
 
-                        if( kinematic ) meshBones.push( mesh );
+                        meshBones.push( mesh );
                         //else linkBones.push( mesh );
 
                     }
@@ -612,9 +612,12 @@ var simulator = ( function () {
 
             isSkeleton = true;
 
+            physicsSkeleton = new PhysicsSkeleton( character, meshBones );
+            scene.add( physicsSkeleton );
+
         },
 
-        removeSkeleton: function () {
+        /*removeSkeleton: function () {
 
             if( !isSkeleton ) return;
 
@@ -626,7 +629,7 @@ var simulator = ( function () {
             isSkeleton = false;
             //isInit = false;
 
-        },
+        },*/
 
         add: function ( o ) {
 

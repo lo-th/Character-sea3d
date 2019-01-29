@@ -217,6 +217,7 @@ THREE.BVHLoader.prototype.addModel = function( model, offsets, options ){
 
     }
 
+
     for( i = 0; i < lng; i++ ){ 
 
         b = bones[ i ];

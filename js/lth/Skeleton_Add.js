@@ -22,14 +22,20 @@ THREE.Skeleton.prototype.setReference = function ( ref ) {
 
         bone = this.bones[i];
         name = bone.name;
-
         bone.userData.idr = -1;
 
         for ( var j = 0, jl = ref.bones.length; j < jl; j ++ ) {
 
+             ref.bones[j].userData.phyMatrix = null;
+
+
             if( name === ref.bones[j].name ){ 
 
             	bone.userData.idr = j;
+                //bone.userData.isAnimated = true;
+
+                //bone.matrix = ref.bones[j].matrixWorld;
+                //bone.matrixAutoUpdate = true;
 
             }
 
@@ -38,6 +44,7 @@ THREE.Skeleton.prototype.setReference = function ( ref ) {
     }
 
 }
+
 
 //-----------------------
 // force local scalling
@@ -63,11 +70,13 @@ THREE.Skeleton.prototype.update = ( function () {
         var boneMatrices = this.boneMatrices;
         var boneTexture = this.boneTexture;
 
-        var m, bone;
+        var m, bone, rBone, needup;
 
         // flatten bone matrices to array
 
         for ( var i = 0, il = bones.length; i < il; i ++ ) {
+
+            needup = true;
 
             bone = bones[ i ];
 
@@ -75,80 +84,116 @@ THREE.Skeleton.prototype.update = ( function () {
 
             var matrix = bone ? bone.matrixWorld : identityMatrix;
 
-             
-
             // reference skeleton update
 
-            if( this.reference_skeleton && bone.userData.idr !==-1 ){ 
+            if( this.reference_skeleton && bone.userData.idr !==-1 ){
 
-                matrix = this.reference_skeleton.bones[ bone.userData.idr ].matrixWorld;
+                rBone = this.reference_skeleton.bones[ bone.userData.idr ];
+                matrix = rBone.userData.isPhysics ? rBone.userData.phyMtx : rBone.matrixWorld;
 
-            }
+                //this.fill( boneMatrices, i * 16, this.reference_skeleton.boneMatrices, bone.userData.idr * 16 );
 
-            // physical mesh update
-            
-            if( bone.userData.isPhysics ){
+                //if( bone.userData.isAnimated ){ 
+                    //matrix = rBone.matrixWorld;
+                //}
 
-                m = bone.userData.mesh;
+                //if( rBone.userData.phyMatrix !== null ){
 
-                if( bone.userData.isKinematic ){
+                    
 
-                    mtx
-                    .multiplyMatrices( bone.matrixWorld, m.userData.decal )
-                    .decompose( p, q, s );
+                    /*if ( bone.parent && bone.parent.isBone ) {
 
-                    m.userData.matrix = [ m.name, p.toArray(), q.toArray() ];
+                        bone.matrix.getInverse( bone.parent.matrixWorld );
+                        bone.matrix.multiply( matrix );
 
-                } else {
+                    } else {
 
-                    mtx
-                    .copy( m.matrixWorld )
-                    .decompose( p, q, s )
-                    .compose( p, q, s.set( 1, 1, 1 ) )
-                    .multiply( m.userData.decal );
+                        bone.matrix.copy( matrix );
 
-                    matrix.copy( mtx );
-
-                    if ( bone.parent && bone.parent.isBone ) {
-
-						bone.matrix.getInverse( bone.parent.matrixWorld );
-						bone.matrix.multiply( mtx );
-
-					} else {
-
-						bone.matrix.copy( mtx );
-
-					}
-
+                    }
 
                     bone.matrix.decompose( bone.position, bone.quaternion, bone.scale );
-                    
-                }
+
+                    needup = false;*/
+
+               // }
 
             }
 
+            //if( !this.reference_skeleton && bone.userData.physicsMatrix === null ){
 
-            // bones scalling
+            /*if( !this.reference_skeleton ){
 
-            if( bone.scalling !== undefined  ){
+                // physical mesh update
+                
+                if( bone.userData.isPhysics ){
 
-                matrix.scale( bone.scalling );
+                    m = bone.userData.mesh;
 
-                for ( var j = 0, jl = bones[ i ].children.length; j < jl; j ++ ) {
+                    if( m.userData.isKinematic ){
 
-                    mtx.multiplyMatrices( matrix, bone.children[ j ].matrix );
-                    mtx.decompose( p, q, s );
-                    bone.children[ j ].matrixWorld.setPosition( p );
+                        mtx
+                        .multiplyMatrices( bone.matrixWorld, m.userData.decal )
+                        .decompose( p, q, s );
+
+                        m.userData.matrix = [ m.name, p.toArray(), q.toArray() ];
+
+                    } else {
+
+
+                        mtx
+                        .copy( m.matrixWorld )
+                        .decompose( p, q, s )
+                        .compose( p, q, s.set( 1, 1, 1 ) )
+                        .multiply( m.userData.decalinv );
+                        //.multiply( m.userData.decal );
+
+                        matrix.copy( mtx );
+
+                        if ( bone.parent && bone.parent.isBone ) {
+
+    						bone.matrix.getInverse( bone.parent.matrixWorld );
+    						bone.matrix.multiply( mtx );
+
+    					} else {
+
+    						bone.matrix.copy( mtx );
+
+    					}
+
+
+                        bone.matrix.decompose( bone.position, bone.quaternion, bone.scale );
+                        
+                    }
+
+                }*/
+
+
+                // bones scalling
+
+                /*if( bone.scalling !== undefined ){
+
+                    matrix.scale( bone.scalling );
+
+                    for ( var j = 0, jl = bones[ i ].children.length; j < jl; j ++ ) {
+
+                        mtx.multiplyMatrices( matrix, bone.children[ j ].matrix );
+                        mtx.decompose( p, q, s );
+                        bone.children[ j ].matrixWorld.setPosition( p );
+
+                    }
 
                 }
-
-            }
+            }*/
 
             // default
-          
-            offsetMatrix.multiplyMatrices( matrix, boneInverses[ i ] );
-            offsetMatrix.toArray( boneMatrices, i * 16 );
             
+            //if(needup){
+                offsetMatrix.multiplyMatrices( matrix, boneInverses[ i ] );
+                offsetMatrix.toArray( boneMatrices, i * 16 );
+            //}
+            
+        
         }
 
         if ( boneTexture !== undefined ) {

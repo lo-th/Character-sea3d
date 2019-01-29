@@ -226,7 +226,7 @@ gui = {
         ui.add('Bool', { name:'SHOW LIMIT', value:physics.getShow(), p:70, inh:16, fontColor:selectColor } ).onChange( physics.show );
 
 
-        ui.add('button', { name:'TEST', p:0, h:30 }).onChange( physicsHack );
+        ui.add('button', { name:'TEST RAGDOLL', p:0, h:30 }).onChange( physicsHack );
 
 
     },

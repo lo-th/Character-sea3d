@@ -46,6 +46,7 @@ body {
 <script src="./js/gui.js"></script>
 <!-- physics -->
 <script src="./js/geometries/CapsuleBufferGeometry.js"></script>
+<script src="./js/lth/PhysicsSkeleton.js"></script>
 <script src="./js/physics.js"></script>
 <!-- lth -->
 <script src="./js/lth/BVHLoader_Add.js"></script>
@@ -280,11 +281,13 @@ function loadModel () {
 
 		materials['head'] = new THREE.MeshStandardMaterial({ 
 			map:loadTexture( './assets/textures/head.jpg', false ), 
+			normalMap:loadTexture( './assets/textures/head_n.jpg', false ),
 			skinning:true, morphTargets:true, metalness:0.5, roughness:0.75, shadowSide:false 
 		});
 
 		materials['head_plus'] = new THREE.MeshStandardMaterial({ 
 			map:loadTexture( './assets/textures/head_plus.jpg', false ),
+			normalMap:loadTexture( './assets/textures/head_plus_n.jpg', false ),
 			alphaMap:loadTexture( './assets/textures/head_plus_m.jpg', false ), 
 			skinning:true, morphTargets:true, metalness:0.5, roughness:0.6, shadowSide:false 
 		});
@@ -436,14 +439,14 @@ function applyAnimationsWeight () {
 function addEyes () {
 
 	eyes = new Eyes();
-	scene.add(eyes);
-	attachToBone( eyes, 'head' );
+	scene.add( eyes );
+	attachToBone( eyes, character, 'head' );
 
 }
 
-function attachToBone ( mesh, boneName ){
+function attachToBone ( mesh, parent, boneName ){
 
-	var bones = character.skeleton.bones, b;
+	var bones = parent.skeleton.bones, b;
 	for(var i = 0, lng = bones.length; i < lng; i++ ){
 		b = bones[i];
 		if( b.name === boneName ){
@@ -487,12 +490,12 @@ function physicsStart() {
 
 	physics.addSkeleton();
 
-	physics.add({ type:'box', size:[80,10,80], pos:[0,-4,0], friction:0.5, restitution:0.2 });
+	physics.add({ type:'box', size:[80,10,80], pos:[0,-4,0], friction:0.5, restitution:0.2, group:1, mask:0 });
 
 	var material = new THREE.MeshStandardMaterial( { color: 0x505050, envMap:environement.envmap, metalness:0.7, roughness:0.4, transparent:true, opacity:0.5 } );
 
 	var i = 100;
-	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, restitution:0.2, material:material });//, angular:0.1
+	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, restitution:0.2, material:material, group:0, mask:0|1|2 });//, angular:0.1
 
 	physics.start();
 	physics.extraUpdate = physicsUpdate;
@@ -529,6 +532,7 @@ function physicsHack() {
 
 	while(i--){
 		b = bodys[i];
+		b.userData.isKinematic = isK ? true : false;
 		r.push( [ b.name, isK ? 2 : 0 ] );
 	}
 
