@@ -469,30 +469,28 @@ var simulator = ( function () {
 
             var tmpMtx = new THREE.Matrix4();
             var tmpMtxR = new THREE.Matrix4();
-            //var tmpMtxInv = new THREE.Matrix4();
-            
-            //var tmpMtxR2 = new THREE.Matrix4();
 
             var p1 = new THREE.Vector3();
             var p2 = new THREE.Vector3();
-            var i, lng = bones.length, name, n, bone, child, o, parentName;
+            var i, lng = bones.length, name, n, boneId, bone, parent;///, child, o, parentName;
             var size, dist, type, mesh, r, kinematic, translate;
 
             for( i = 0; i < lng; i++ ){
 
                 type = null;
-                parentName = null;
-
                 bone = bones[i];
                 name = bone.name;
 
                 if( bone.parent && bone.parent.isBone ) {
 
-                    n = bone.parent.name;
+                    parent = bone.parent;
+                    n = parent.name;
+                    boneId = bones.indexOf( parent );
+
                     r = 90;
 
                     // get distance between bone and parent
-                    p1.setFromMatrixPosition( bone.parent.matrixWorld );
+                    p1.setFromMatrixPosition( parent.matrixWorld );
                     p2.setFromMatrixPosition( bone.matrixWorld );
                     dist = p1.distanceTo( p2 );
 
@@ -540,19 +538,13 @@ var simulator = ( function () {
 
                         // translation
                         tmpMtx.makeTranslation( translate[0], translate[1], translate[2] );
-                        //tmpMtxInv.makeTranslation( -translate[0], -translate[1], -translate[2] );
                         // rotation
                         if( r!==0 ){
-
                             tmpMtxR.makeRotationFromEuler( e.set( 0, 0, r*torad ) );
                             tmpMtx.multiply( tmpMtxR );
-
-                            //tmpMtxR2.makeRotationFromEuler( e.set( 0, 0, -r*torad ) );
-                            //tmpMtxInv.multiply( tmpMtxR2 );
-
                         }
                          
-                        mtx.multiplyMatrices( bone.parent.matrixWorld, tmpMtx );
+                        mtx.multiplyMatrices( parent.matrixWorld, tmpMtx );
                         mtx.decompose( p, q, s );
 
                         var mass = (size[0]+size[1]+size[2])*0.1;
@@ -582,7 +574,8 @@ var simulator = ( function () {
                         mesh.userData.isKinematic = kinematic;
                         mesh.userData.decal = tmpMtx.clone();
                         mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );//tmpMtxInv.clone();
-                        mesh.userData.bone = bone.parent;
+                        //mesh.userData.boneId = boneId;
+                        mesh.userData.bone = parent;
 
                         //mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
                         //mesh.userData.dist = dist;

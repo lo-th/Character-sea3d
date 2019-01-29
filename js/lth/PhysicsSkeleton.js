@@ -11,16 +11,19 @@ function PhysicsSkeleton( object, nodes ) {
 	this.nodes = nodes;
 	this.upMtx = [];
 
+	
+
+	var bone;
+	for ( var i = 0, il = this.nodes.length; i < il; i ++ ) {
+		//bone = this.bones[ this.nodes[i].userData.boneId ];//
+		bone = this.nodes[i].userData.bone;
+		bone.userData.isPhysics = true;
+	}
+
 	THREE.Object3D.call( this );
 
 	this.matrix = object.matrixWorld;
 	this.matrixAutoUpdate = false;
-
-	var bone;
-	for ( var i = 0, il = nodes.length; i < il; i ++ ) {
-		bone = nodes[i].userData.bone;
-		bone.userData.isPhysics = true;
-	}
 
 }
 
@@ -35,15 +38,8 @@ PhysicsSkeleton.prototype.clear = function () {
 
 };
 
-/*PhysicsSkeleton.prototype.getSkeletontMatrix = function () {
-
-	return this.upMtx;
-
-};*/
-
 PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 
-	//var vector = new THREE.Vector3();
 	var mtx = new THREE.Matrix4();
 	var mtx2 = new THREE.Matrix4();
 	var p = new THREE.Vector3();
@@ -65,6 +61,7 @@ PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 
 			node = nodes[i];
 			bone = node.userData.bone;
+			//bone = bones[ node.userData.boneId ];
 			//bone.userData.isPhyics = true;
 
 			if( node.userData.isKinematic ){
@@ -101,35 +98,6 @@ PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 
 		this.upMtx = upMtx;
 
-		//console.log('up')
-
-		/*var geometry = this.geometry;
-		var position = geometry.getAttribute( 'position' );
-
-		matrixWorldInv.getInverse( this.root.matrixWorld );
-
-		for ( var i = 0, j = 0; i < bones.length; i ++ ) {
-
-			var bone = bones[ i ];
-
-			if ( bone.parent && bone.parent.isBone ) {
-
-				boneMatrix.multiplyMatrices( matrixWorldInv, bone.matrixWorld );
-				vector.setFromMatrixPosition( boneMatrix );
-				position.setXYZ( j, vector.x, vector.y, vector.z );
-
-				boneMatrix.multiplyMatrices( matrixWorldInv, bone.parent.matrixWorld );
-				vector.setFromMatrixPosition( boneMatrix );
-				position.setXYZ( j + 1, vector.x, vector.y, vector.z );
-
-				j += 2;
-
-			}
-/
-		}
-
-		//geometry.getAttribute( 'position' ).needsUpdate = true;
-*/
 		THREE.Object3D.prototype.updateMatrixWorld.call( this, force );
 
     };
