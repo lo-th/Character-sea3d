@@ -2,7 +2,9 @@
 *    | ||_   _| |_| |
 *    | |_ | | |  _  |
 *    |___||_| |_| |_|
-*    @author lo.th / http://lo-th.github.io/labs/
+*    @author lo.th / https://github.com/lo-th
+*    @source https://github.com/lo-th/Ammo.lab
+*
 *    AMMO worker ultimate
 *
 *    By default, Bullet assumes units to be in meters and time in seconds. 
@@ -19,10 +21,6 @@ var Ammo, start;
 var worldscale = 1;
 var invScale = 1;
 
-//var Module = { TOTAL_MEMORY: 256*1024*1024 };
-//var Module = { TOTAL_MEMORY: 256*1024*1024 };
-//var isFirst = true;
-
 var world = null;
 var worldInfo = null;
 var solver, solverSoft, collision, dispatcher, broadphase, ghostPairCallback;
@@ -34,30 +32,23 @@ var tmpTrans, tmpPos, tmpQuat, origineTrans;
 var tmpPos1, tmpPos2, tmpPos3, tmpPos4, tmpZero;
 var tmpTrans1, tmpTrans2, tmpTransX, worldTrans;
 
-// forces
-var tmpForce = [];//null;
 
-// kinematic
+var tmpForce = [];
 var tmpMatrix = [];
-var tmpFlag = [];
-//var tmpset = null;
-
+var tmpOption = [];
+var tmpClear = [];
 // array
 var bodys, solids, softs, joints, cars, heros, terrains, carsInfo, contacts, contactGroups;
 // object
 var byName;
 
 var timestep = 1/60;
-//var timerStep = timestep * 1000;
 
-var substep = 8;//4//3;// default is 1. 2 or more make simulation more accurate.
+var substep = 8;// default is 1. 2 or more make simulation more accurate.
 //var ddt = 1;
 var key = [ 0,0,0,0,0,0,0,0 ];
 var tmpKey = [ 0,0,0,0,0,0,0,0 ];
 
-//var pause = true;
-
-//var timer = 0;
 var isBuffer = false;
 
 
@@ -69,9 +60,6 @@ var Ar, aAr;
 var ArLng, ArPos, ArMax;
 
 
-//var Br, Cr, Jr, Hr, Sr;
- // ArrayBuffer
-//var aBr, aCr, aJr, aHr, aSr;
 
 var fixedTime = 0.01667;
 var last_step = Date.now();
@@ -152,15 +140,12 @@ self.onmessage = function ( e ) {
         case 'anchor': anchor( o ); break;
         //case 'apply': apply( data.o ); break;
 
-        case 'force': tmpForce.push( o ); break;
-        case 'forceArray': tmpForce = o; break;
 
-        case 'matrix': tmpMatrix.push( o ); break;
-        //case 'matrixArray': tmpMatrix = o; break;
-        case 'matrixArray': tmpMatrix = tmpMatrix.concat(o); break;
+        case 'setForce': tmpForce = tmpForce.concat(o); break;
+        case 'setMatrix': tmpMatrix = tmpMatrix.concat(o); break;
+        case 'setOption': tmpOption = tmpOption.concat(o); break;
 
-        case 'setFlag': tmpFlag = tmpFlag.concat(o); break;
-
+        case 'remove': tmpClear = tmpClear.concat(o); break;
         //case 'setVehicle': setVehicle( o ); break;
 
         case 'contact': addContact( o ); break;
@@ -182,14 +167,23 @@ function step( o ){
 
     //key = o.key;
 
+    
+
     // update matrix
+
     updateMatrix();
 
-    updateFlag();
+    // update option
+
+    updateOption();
 
     // update forces
 
-    //updateForce();
+    updateForce();
+
+    // update object to remove
+
+    updateRemove();
 
     // terrain update
 
@@ -518,22 +512,74 @@ function applyForce ( r ) {
 }
 
 //---------------------
-// FLAG
+// REMOVE
 //---------------------
 
-function updateFlag () {
+function updateRemove () {
 
-    while( tmpFlag.length > 0 ) applyFlag( tmpFlag.pop() );
+    while( tmpClear.length > 0 ) applyRemove( tmpClear.pop() );
 
 }
 
-function applyFlag ( r ) {
+function applyRemove ( name ) {
 
-    var b = getByName( r[0] );
+    //onsole.log(name)
+    removeRigidBody( name );
+
+}
+
+//---------------------
+// OPTION
+//---------------------
+
+// ___________________________FLAG
+//  1  : STATIC_OBJECT
+//  2  : KINEMATIC_OBJECT
+//  4  : NO_CONTACT_RESPONSE
+//  8  : CUSTOM_MATERIAL_CALLBACK
+//  16 : CHARACTER_OBJECT
+//  32 : DISABLE_VISUALIZE_OBJECT
+//  64 : DISABLE_SPU_COLLISION_PROCESSING
+
+// ___________________________STATE
+//  1  : ACTIVE
+//  2  : ISLAND_SLEEPING
+//  3  : WANTS_DEACTIVATION
+//  4  : DISABLE_DEACTIVATION
+//  5  : DISABLE_SIMULATION
+
+function updateOption () {
+
+    while( tmpOption.length > 0 ) applyOption( tmpOption.pop() );
+
+}
+
+function applyOption ( o ) {
+
+    var b = getByName( o.name );
+
     if( b === undefined ) return;
     if( b === null ) return;
 
-    b.setCollisionFlags( r[1] || 0 );
+    if( o.flag !== undefined ) b.setCollisionFlags( o.flag );
+    if( o.state !== undefined ) b.setMotionState( o.state );
+
+    if( o.friction !== undefined ) b.setFriction( o.friction );
+    if( o.restitution !== undefined ) b.setRestitution( o.restitution );
+    if( o.damping !== undefined ) b.setDamping( o.damping[0], o.damping[1] );
+    if( o.rollingFriction !== undefined ) b.setRollingFriction( o.rollingFriction );
+
+    if( o.linearVelocity !== undefined ) b.setLinearVelocity( tmpPos1.fromArray(o.linearVelocity) );
+    if( o.angularVelocity !== undefined ) b.setAngularVelocity( o.angularVelocity );
+
+    if( o.linearFactor !== undefined ) b.setLinearFactor( tmpPos1.fromArray(o.linearFactor) );
+    if( o.angularFactor !== undefined ) b.setAngularFactor( o.angularFactor );
+
+    if( o.anisotropic !== undefined ) b.setAnisotropicFriction( anisotropic[0], anisotropic[1] );
+    if( o.sleeping !== undefined ) b.setSleepingThresholds( sleeping[0], sleeping[1] );
+    if( o.massProps !== undefined ) b.setMassProps( massProps[0], massProps[1] );
+
+    if( o.gravity !== undefined ) { if(o.gravity) b.setGravity( gravity ); else b.setGravity( tmpZero ) }
 
 }
 
@@ -1011,51 +1057,63 @@ function addJoint ( o ) {
 
 
     // slider & dof
+    if( joint.setLinearLowerLimit ){
+        if(o.linLower){ tmpPos.fromArray(o.linLower).multiplyScalar(invScale); joint.setLinearLowerLimit( tmpPos ); }
+        if(o.linUpper){ tmpPos.fromArray(o.linUpper).multiplyScalar(invScale); joint.setLinearUpperLimit( tmpPos ); }
+    }
+    if( joint.setAngularLowerLimit ){
+        if(o.angLower){ tmpPos.fromArray(o.angLower); joint.setAngularLowerLimit( tmpPos ); }
+        if(o.angUpper){ tmpPos.fromArray(o.angUpper); joint.setAngularUpperLimit( tmpPos ); }
+    }
 
-    if(o.linLower){ tmpPos.fromArray(o.linLower).multiplyScalar(invScale); joint.setLinearLowerLimit( tmpPos ); }
-    if(o.linUpper){ tmpPos.fromArray(o.linUpper).multiplyScalar(invScale); joint.setLinearUpperLimit( tmpPos ); }
-    
-    if(o.angLower){ tmpPos.fromArray(o.angLower); joint.setAngularLowerLimit( tmpPos ); }
-    if(o.angUpper){ tmpPos.fromArray(o.angUpper); joint.setAngularUpperLimit( tmpPos ); }
-
-    // spring dof
+    // dof
 
     if(o.feedback) joint.enableFeedback( o.feedback );
-    if(o.enableSpring) joint.enableSpring( o.enableSpring[0], o.enableSpring[1] );
-    if(o.damping) joint.setDamping( o.damping[0], o.damping[1] );
-    if(o.stiffness) joint.setStiffness( o.stiffness[0], o.stiffness[1] );
+    if(o.param) joint.setParam( o.param[0], o.param[1], o.param[1] );//BT_CONSTRAINT_STOP_CFM, 1.0e-5f, 5 // add some damping
+
+    // spring dof
+    //if( o.enableSpring && joint.enableSpring ) joint.enableSpring( o.enableSpring[0], o.enableSpring[1] );//0, true
+    //if( o.stiffness && joint.setStiffness ) joint.setStiffness( o.stiffness[0], o.stiffness[1] );//0, 39.478 // period 1 sec for !kG body
+    if(o.damping && joint.setDamping ) joint.setDamping( o.damping[0], o.damping[1] );// 0, 0.01 // add some damping
+    // constraint force mixing prevents "locking" on limits
+    
 
     if(o.angularOnly) joint.setAngularOnly( o.angularOnly );
     if(o.enableMotor) joint.enableMotor( o.enableMotor );
     if(o.maxMotorImpulse) joint.setMaxMotorImpulse( o.maxMotorImpulse );
     if(o.motorTarget) joint.setMotorTarget( tmpQuat.fromArray( o.motorTarget ) );
 
-    if(o.springPosition){
-        for ( var i = 0; i < 3; i++ ) {
+    if( joint.enableSpring ){
 
-            if( o.springPosition[ i ] !== 0 ) {
 
-                joint.enableSpring( i, true );
-                joint.setStiffness( i, o.springPosition[ i ] );
+        if( o.springPosition){
+            for ( var i = 0; i < 3; i++ ) {
 
-            }
+                if( o.springPosition[ i ] !== 0 ) {
 
-        }
-    }
+                    joint.enableSpring( i, true );
+                    joint.setStiffness( i, o.springPosition[ i ] );
 
-    if(o.springRotation){
-        for ( var i = 0; i < 3; i++ ) {
-
-            if( o.springRotation[ i ] !== 0 ) {
-
-                joint.enableSpring( i + 3, true );
-                joint.setStiffness( i + 3, o.springRotation[ i ] );
+                }
 
             }
-
         }
-    }
+   
 
+        if(o.springRotation){
+            for ( var i = 0; i < 3; i++ ) {
+
+                if( o.springRotation[ i ] !== 0 ) {
+
+                    joint.enableSpring( i + 3, true );
+                    joint.setStiffness( i + 3, o.springRotation[ i ] );
+
+                }
+
+            }
+        }
+
+    }
 
     // debug test 
     joint.type = 0;
@@ -1218,6 +1276,29 @@ function clearRigidBody () {
 
 };
 
+function removeRigidBody ( name ) {
+    
+    var b = byName[ name ];
+
+    if( b === undefined ) return;
+    if( b === null ) return;
+
+    var n = bodys.indexOf( b );
+    if( n !== -1 ) {
+        bodys.splice( n, 1 );
+        world.removeRigidBody( b );
+        Ammo.destroy( b );
+    } else {
+        n = solids.indexOf( b );
+        if( n !== -1 ) {
+            solids.splice( n, 1 );
+            world.removeCollisionObject( b );
+            Ammo.destroy( b );
+        }
+    }
+
+}
+
 function addRigidBody ( o, extra ) {
 
     var isKinematic = false;
@@ -1357,8 +1438,6 @@ function addRigidBody ( o, extra ) {
     var rbInfo = new Ammo.btRigidBodyConstructionInfo( o.mass, motionState, shape, tmpPos1 );
    
 
-    
-
     if( o.friction !== undefined ) rbInfo.set_m_friction( o.friction );//0.5
     if( o.restitution !== undefined ) rbInfo.set_m_restitution( o.restitution );//0
     //Damping is the proportion of velocity lost per second.
@@ -1378,13 +1457,13 @@ function addRigidBody ( o, extra ) {
 
     //if( o.positionDamping !== undefined && o.rotationDamping !== undefined ) body.setDamping( o.positionDamping, o.rotationDamping );
 
-    if ( o.mass === 0 && !isKinematic){
+    if ( o.mass === 0 && !isKinematic ){ // static
 
         body.setCollisionFlags( o.flag || 1 ); 
         world.addCollisionObject( body, o.group || 1, o.mask || -1 );
         solids.push( body );
 
-    } else {
+    } else { // dynamic or kinematic
 
        // body.isKinematic = isKinematic;
         body.setCollisionFlags( o.flag || 0 );
@@ -1418,6 +1497,8 @@ function addRigidBody ( o, extra ) {
         */
         
         bodys.push( body );
+
+        //console.log( body )
         
     }
     
@@ -1433,6 +1514,8 @@ function addRigidBody ( o, extra ) {
     //Ammo.destroy( startTransform );
     //Ammo.destroy( localInertia );
     Ammo.destroy( rbInfo );
+
+
 
     o = null;
 

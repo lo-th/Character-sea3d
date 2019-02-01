@@ -10,6 +10,7 @@ function PhysicsSkeleton( object, nodes ) {
 	//this.bones = object.skeleton.bones;
 	this.nodes = nodes;
 	this.upMtx = [];
+	this.isShow = false;
 
 	
 
@@ -18,6 +19,7 @@ function PhysicsSkeleton( object, nodes ) {
 		//bone = this.bones[ this.nodes[i].userData.boneId ];//
 		bone = this.nodes[i].userData.bone;
 		bone.userData.isPhysics = true;
+		bone.userData.phyMtx = new THREE.Matrix4();
 	}
 
 	THREE.Object3D.call( this );
@@ -25,12 +27,34 @@ function PhysicsSkeleton( object, nodes ) {
 	this.matrix = object.matrixWorld;
 	this.matrixAutoUpdate = false;
 
+	this.show();
+
 }
 
 PhysicsSkeleton.prototype = Object.create( THREE.Object3D.prototype );
 PhysicsSkeleton.prototype.constructor = PhysicsSkeleton;
 
+PhysicsSkeleton.prototype.show = function ( b ) {
+
+	if( b !== undefined ) this.isShow = b;
+
+	var i = this.nodes.length;
+	while( i-- ){
+		this.nodes[i].visible = this.isShow;
+	}
+
+}
+
 PhysicsSkeleton.prototype.clear = function () {
+
+	var bone;
+    var i = this.nodes.length;
+	while( i-- ){
+	//for( var i=0, lng = this.nodes.length; i<lng; i++ ){
+		bone = this.nodes[i].userData.bone;
+        bone.userData.isPhysics = false;
+        bone.userData.phyMtx = new THREE.Matrix4();
+    }
 
 	this.nodes = [];
 	this.upMtx = [];
@@ -57,7 +81,10 @@ PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 
 		var node, bone;
 
-		for ( var i = 0, il = nodes.length; i < il; i ++ ) {
+		var i = nodes.length;
+		while( i-- ){
+
+		//for ( var i = 0, lng = nodes.length; i < lng; i ++ ) {
 
 			node = nodes[i];
 			bone = node.userData.bone;
@@ -98,7 +125,7 @@ PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 
 		this.upMtx = upMtx;
 
-		THREE.Object3D.prototype.updateMatrixWorld.call( this, force );
+		//THREE.Object3D.prototype.updateMatrixWorld.call( this, force );
 
     };
 

@@ -26,16 +26,12 @@ THREE.Skeleton.prototype.setReference = function ( ref ) {
 
         for ( var j = 0, jl = ref.bones.length; j < jl; j ++ ) {
 
-             ref.bones[j].userData.phyMatrix = null;
+            ref.bones[j].userData.phyMatrix = null;
 
 
             if( name === ref.bones[j].name ){ 
 
             	bone.userData.idr = j;
-                //bone.userData.isAnimated = true;
-
-                //bone.matrix = ref.bones[j].matrixWorld;
-                //bone.matrixAutoUpdate = true;
 
             }
 
@@ -62,7 +58,7 @@ THREE.Skeleton.prototype.update = ( function () {
         var boneMatrices = this.boneMatrices;
         var boneTexture = this.boneTexture;
 
-        var m, bone, rBone, needup;
+        var m, bone, rBone, needup, matrix;
 
         // flatten bone matrices to array
 
@@ -72,7 +68,7 @@ THREE.Skeleton.prototype.update = ( function () {
 
             // compute the offset between the current and the original transform
 
-            var matrix// = bone ? bone.matrixWorld : identityMatrix;
+            //var matrix = bone ? bone.matrixWorld : identityMatrix;
 
             // reference skeleton update
 
@@ -117,6 +113,8 @@ THREE.Skeleton.prototype.update = ( function () {
             boneTexture.needsUpdate = true;
 
         }
+
+
 
     };
 

@@ -45,6 +45,7 @@ body {
 <script src="./js/libs/uil.min.js"></script>
 <script src="./js/gui.js"></script>
 <!-- physics -->
+<script src="./js/geometries/Axes.js"></script>
 <script src="./js/geometries/CapsuleBufferGeometry.js"></script>
 <script src="./js/lth/PhysicsSkeleton.js"></script>
 <script src="./js/physics.js"></script>
@@ -310,8 +311,9 @@ function loadModel () {
 		// define main character
 		character = meshs.Armature;
 
-		addEyes();
+
 		initBVH();
+		addEyes();
 		loadEnvMap( envName );
 
 		ground.visible = true;
@@ -371,6 +373,17 @@ function initBVH () {
 	bvhLoader.load( "./assets/bvh/idle.bvh", addAnimation );
 	bvhLoader.load( "./assets/bvh/ClubDance.bvh", addAnimation );
 
+
+	//  test
+
+	initPhysics();
+	//showModel(false)
+	//simulator.show(true);
+	character.setTimeScale( 0.5 );
+
+	gui.select(3);
+
+
 }
 
 function parseAnimation( data, name, type ) {
@@ -389,7 +402,7 @@ function addAnimation ( result ) {
 
     bvhLoader.applyToModel( character, result, seq, pos );
 
-    character.play( result.clip.name );
+    if(result.clip.name!== 'idle' && result.clip.name!== 'ClubDance') character.play( result.clip.name );
 
     animations[result.clip.name] = 1;
 
@@ -439,19 +452,25 @@ function applyAnimationsWeight () {
 function addEyes () {
 
 	eyes = new Eyes();
+	eyes.setBone( meshs.Head.skeleton.getBoneByName('head'), character.skeleton );
 	scene.add( eyes );
-	attachToBone( eyes, character, 'head' );
+    //attachToBone( eyes, meshs.Body, 'head' );
+	//attachToBone( eyes, character, 'head' );
 
 }
 
 function attachToBone ( mesh, parent, boneName ){
 
 	var bones = parent.skeleton.bones, b;
-	for(var i = 0, lng = bones.length; i < lng; i++ ){
+	for( var i = 0, lng = bones.length; i < lng; i++ ){
 		b = bones[i];
 		if( b.name === boneName ){
+			//b.add( mesh );
+			mesh.link = b;
+
 			mesh.matrix = b.matrixWorld;
 			mesh.matrixAutoUpdate = false;
+
 		}
 	}
 
@@ -488,58 +507,9 @@ function initPhysics() {
 
 function physicsStart() {
 
-	physics.addSkeleton();
-
-	physics.add({ type:'box', size:[80,10,80], pos:[0,-4,0], friction:0.5, restitution:0.2, group:1, mask:0 });
-
-	var material = new THREE.MeshStandardMaterial( { color: 0x505050, envMap:environement.envmap, metalness:0.7, roughness:0.4, transparent:true, opacity:0.5 } );
-
-	var i = 100;
-	while( i-- ) physics.add({ type:'sphere', size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, restitution:0.2, material:material, group:0, mask:0|1|2 });//, angular:0.1
-
+	simulator.addSkeleton();
+	simulator.add({ type:'box', size:[100,10,100], pos:[0,-4,0], friction:0.5, restitution:0.2, group:1, mask:0 });
 	physics.start();
-	physics.extraUpdate = physicsUpdate;
-
-}
-
-function physicsUpdate() {
-
-	var bodys = physics.getBodys();
-	var i = bodys.length, b;
-
-	var r = [];
-
-	while(i--){
-		b = bodys[i];
-		if( b.position.y < -20 ) r.push( [ b.name, [ random(-30,30), random(100,200), random(-30,30) ]] );
-	}
-
-	physics.send( 'matrixArray', r );
-
-}
-
-var isK = true;
-
-function physicsHack() {
-
-	var bodys = physics.getMeshBones();
-
-	if( bodys === null ) return;
-
-	var i = bodys.length, b;
-
-	if(isK) isK = false;
-	else isK = true;
-
-	var r = [];
-
-	while(i--){
-		b = bodys[i];
-		b.userData.isKinematic = isK ? true : false;
-		r.push( [ b.name, isK ? 2 : 0 ] );
-	}
-
-	physics.send( 'setFlag', r );
 
 }
 
@@ -568,6 +538,7 @@ function showHelper() {
     } else {
 
         helper = new THREE.SkeletonHelper( character );
+        //helper = new THREE.SkeletonHelper( meshs.body );
         scene.add( helper );
         isHelper = true;
 

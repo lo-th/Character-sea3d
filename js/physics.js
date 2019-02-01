@@ -2,7 +2,8 @@
 *    | ||_   _| |_| |
 *    | |_ | | |  _  |
 *    |___||_| |_| |_|
-*    @author lo.th / http://lo-th.github.io/labs/
+*    @author lo.th / https://github.com/lo-th
+*
 *    AMMO worker launcher
 */
 
@@ -58,6 +59,8 @@ var physics = ( function () {
 
     var meshData = [];
 
+    var isRagdoll = false;
+
 
     physics = {
 
@@ -70,11 +73,9 @@ var physics = ( function () {
 
         load: function ( Callback, Option ) {
 
-            console.log('load')
-
             var xhr = new XMLHttpRequest(); 
             xhr.responseType = "arraybuffer";
-            xhr.open( 'GET', "./worker/ammo.hex", true );
+            xhr.open( 'GET', "./js/worker/ammo.hex", true );
 
             xhr.onreadystatechange = function () {
 
@@ -123,7 +124,7 @@ var physics = ( function () {
 
             timerate = (1/option.fps) * 1000;
 
-            worker = new Worker('./worker/ammo.worker.js');
+            worker = new Worker('./js/worker/ammo.worker.js');
             worker.onmessage = this.message;
             worker.postMessage = worker.webkitPostMessage || worker.postMessage;
 
@@ -186,8 +187,8 @@ var physics = ( function () {
 
         update: function () {
 
-            physics.send( 'matrixArray', simulator.getSkeletontMatrix() );
-            physics.extraUpdate()
+            physics.send( 'setMatrix', simulator.getSkeletontMatrix() );
+            physics.extraUpdate();
 
             if( isBuffer ) worker.postMessage( { m:'step', Ar:Ar }, [ Ar.buffer ] );
             else worker.postMessage( { m:'step' } );
@@ -316,7 +317,7 @@ var physics = ( function () {
 
         },
 
-        addSkeleton: function () {
+        /*addSkeleton: function () {
 
             return simulator.addSkeleton();
 
@@ -334,18 +335,12 @@ var physics = ( function () {
 
         },
 
-        show: function ( b ) {
-
-            simulator.show( b );
-
-        },
-
         getShow: function () {
 
             return simulator.getShow();
             
-        },
-        
+        },*/
+
     }
 
     return physics;
@@ -370,19 +365,25 @@ var simulator = ( function () {
     var torad = 0.0174532925199432957;
     var PI90 = 1.570796326794896;
 
-    var isSkeleton = false;
-    var isShow = false;
-
     var physicsSkeleton = null;
+    var numBall = 100;
+
+    var byName = {};
 
     simulator = {
 
-        byName: {},
+        isRagdoll: false,
+        isBall: false,
+        isSkeleton: false,
+        isShow: false,
+
 
         step: function(){
 
             if( !physics.isStart ) return;
             if( !bodys.length ) return;
+
+
 
             bodys.forEach( function( b, id ) {
 
@@ -392,16 +393,113 @@ var simulator = ( function () {
 
             });
 
-            //simulator.applyPhysicsBone()
+            
 
         },
 
-        getMeshBones: function (){
-            if(!physicsSkeleton) return null;
-            return physicsSkeleton.nodes;
+        //________________________________________________________BALL
+
+        ball: function ( b ) {
+
+            if( b ) simulator.addBall();
+            else simulator.removeBall();
 
         },
 
+        ballUpdate: function () {
+
+            if( !simulator.isBall ) return;
+
+            var i = bodys.length, b, name;
+
+            var r = [];
+
+            while(i--){
+
+                b = bodys[i];
+                
+                if( b.position.y < -20 ){ 
+
+                    name = b.name.substring(0,4);
+                    if( name === 'ball' ) r.push( [ b.name, [ random(-30,30), random(100,200), random(-30,30) ]] );
+
+                }
+            }
+
+            physics.send( 'setMatrix', r );
+
+        },
+
+        addBall: function () {
+
+            if( simulator.isBall ) return;
+
+            var material = new THREE.MeshStandardMaterial( { color: 0x505050, envMap:environement.envmap, metalness:0.7, roughness:0.4, transparent:true, opacity:0.5 } );
+            var i = numBall;
+            while( i-- ) simulator.add({ type:'sphere', name:'ball'+i, size:[random(20,50)*0.1], pos:[random(-30,30),100+(i*3),random(-30,30)], mass:1, friction:0.5, restitution:0.2, material:material, group:0, mask:0|1|2 });
+            simulator.isBall = true;
+
+            physics.extraUpdate = simulator.ballUpdate;
+
+        },
+
+        removeBall: function (){
+
+            if( !simulator.isBall ) return;
+
+            var r = [];
+            var i = numBall, id, name, b, n;
+            while( i-- ){
+                name = 'ball'+i;
+                b = byName[ name ];
+                n = bodys.indexOf( b );
+                if( n!==-1 ){ 
+                    r.push( name );
+                    bodys.splice( n, 1 );
+                    physicsGroup.remove( b );
+                }
+
+            }
+
+            physics.send( 'remove', r );
+            simulator.isBall = false;
+
+        },
+
+        //________________________________________________________
+
+        ragdoll: function ( b ) {
+
+            if( !simulator.isSkeleton ) return
+
+            var nodes = physicsSkeleton.nodes;
+
+            if( nodes === null ) return;
+
+            var i = nodes.length, b;
+
+            simulator.isRagdoll = b;
+
+            var isK = simulator.isRagdoll ? false : true;
+
+            var r = [];
+
+            while(i--){
+
+                b = nodes[i];
+                b.userData.isKinematic = isK ? true : false;
+                r.push({ 
+                    name: b.name, 
+                    flag: isK ? 2 : 0, 
+                    gravity: isK ? false : true,
+                    damping: isK ? [0,0] : [0.05,0.85],
+                });
+
+            }
+
+            physics.send( 'setOption', r );
+            
+        },
 
         getBodys: function (){
             
@@ -411,22 +509,18 @@ var simulator = ( function () {
 
         show: function ( b ) {
 
-            isShow = b;
+            simulator.isShow = b;
             if( mat === null ) return;
-            mat.kinematic.visible = b;
+            //mat.kinematic.visible = b;
             mat.static.visible = b;
-            
-        },
 
-        getShow: function () {
-
-            return isShow;
+            if( simulator.isSkeleton ) physicsSkeleton.show( b );
             
         },
 
         clear: function (){
 
-            simulator.byName = {};
+            byName = {};
 
             while( extraGeo.length > 0 ) extraGeo.pop().dispose();
             while( bodys.length > 0 ) physicsGroup.remove( bodys.pop() );
@@ -434,27 +528,21 @@ var simulator = ( function () {
 
             //meshBones = [];
 
-            scene.remove( physicsSkeleton );
-            physicsSkeleton.clear();
-
-
-
-            isSkeleton = false;
+            simulator.removeSkeleton();
 
         },
 
         getSkeletontMatrix: function () {
 
-            if(!physicsSkeleton) return [];
-            return physicsSkeleton.upMtx;
+            return simulator.isSkeleton ? physicsSkeleton.upMtx : [];
 
         },
 
         addSkeleton: function () {
 
-            if( isSkeleton ) return;
+            if( simulator.isSkeleton ) return;
 
-            var meshBones = [];
+            var nodes = [];
 
             var fingers = [ 'Thumb', 'Index', 'Mid', 'Ring', 'Pinky' ];
 
@@ -521,7 +609,6 @@ var simulator = ( function () {
                         var s = f === 'Thumb' ? 1+(fnum*0.25) : s = 1+(fnum*0.1);
                         type = 'box'; size = [ dist, s, s ]; r=0; 
                     }
-
                     // legs
                     if( n==='rThigh' && name==='rShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
                     if( n==='lThigh' && name==='lShin' ){ type = 'cylinder'; size = [ 4, dist, 4 ]; }
@@ -564,8 +651,8 @@ var simulator = ( function () {
                             //linear: kinematic ? 0 : 0.5,
                             //angular: kinematic ? 0 : 2,
 
-                            group: kinematic ? 2 : 1,
-                            mask: kinematic ? 1 : 2,
+                            //group: kinematic ? 2 : 1,
+                            //mask: kinematic ? 1 : 2,
 
                             neverSleep: true,
 
@@ -576,6 +663,8 @@ var simulator = ( function () {
                         mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );//tmpMtxInv.clone();
                         //mesh.userData.boneId = boneId;
                         mesh.userData.bone = parent;
+                        mesh.userData.r = r;
+                        mesh.userData.d = dist;
 
                         //mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
                         //mesh.userData.dist = dist;
@@ -595,34 +684,215 @@ var simulator = ( function () {
                         //bone.userData.isKinematic = kinematic;
                         
 
-                        meshBones.push( mesh );
-                        //else linkBones.push( mesh );
+                        nodes.push( mesh );
 
                     }
                 }
 
             }
 
-            isSkeleton = true;
+            simulator.isSkeleton = true;
 
-            physicsSkeleton = new PhysicsSkeleton( character, meshBones );
+            simulator.addLinks();
+
+            physicsSkeleton = new PhysicsSkeleton( character, nodes );
             scene.add( physicsSkeleton );
 
         },
 
-        /*removeSkeleton: function () {
+        removeSkeleton: function () {
 
-            if( !isSkeleton ) return;
+            if( !simulator.isSkeleton ) return;
+            
+            scene.remove( physicsSkeleton );
+            physicsSkeleton.clear();
+            simulator.isSkeleton = false;
 
-            // clear physics engine
-            //physics.reset( true );
+        },
 
-            meshBones = [];
+        addLinks: function () {
 
-            isSkeleton = false;
-            //isInit = false;
+            var low = [-45, -60, -45];
+            var high = [45, 60, 45]
 
-        },*/
+            simulator.makeLink(  'hip', 'abdomen',  [-10,-40,-10] , [10,40,10] );
+            simulator.makeLink( 'abdomen', 'chest', low, high );
+            simulator.makeLink( 'chest', 'neck', low, high );
+            simulator.makeLink( 'neck', 'head', low, high );
+
+            for (var i = 0; i<2; i++){
+                
+                var s = i === 0 ? 'r' : 'l';
+
+                low = [-45, -60, -45];
+                high = [45, 60, 45]
+
+                // leg
+                simulator.makeLink( 'hip', s + 'Thigh', [-90,-90,-90] , [90,90,90] );
+                simulator.makeLink( s + 'Thigh', s + 'Shin', [-5,-180,-5] , [5,5,5] );
+                simulator.makeLink( s + 'Shin', s + 'Foot', [-90,-90,-90] , [90,90,90] );
+                simulator.makeLink( s + 'Foot', s + 'Toes', [-90,-90,-90] , [90,90,90] );
+
+                // arm
+                simulator.makeLink( 'chest', s + 'Collar', [-5,-5,-10] , [5,5,10] );
+                simulator.makeLink( s + 'Collar', s + 'Shldr', low , high );
+                simulator.makeLink( s + 'Shldr' , s + 'ForeArm', [-5,-180,-5] , [5,5,5] );
+                simulator.makeLink( s + 'ForeArm', s + 'Hand', [0,-10,0] , [0,10,0] );
+
+
+
+                // finger
+
+                low = [-10, -10, -90];
+                high = [10, 10, 90]
+
+                simulator.makeLink( s + 'Hand', s + 'Thumb1', low , high );
+                simulator.makeLink( s + 'Thumb1', s + 'Thumb2', low , high );
+                simulator.makeLink( s + 'Thumb2', s + 'Thumb3', low , high );
+
+                simulator.makeLink( s + 'Hand', s + 'Index1', low , high );
+                simulator.makeLink( s + 'Index1', s + 'Index2', low , high );
+                simulator.makeLink( s + 'Index2', s + 'Index3', low , high );
+
+                simulator.makeLink( s + 'Hand', s + 'Mid1', low , high );
+                simulator.makeLink( s + 'Mid1', s + 'Mid2', low , high );
+                simulator.makeLink( s + 'Mid2', s + 'Mid3', low , high );
+
+                simulator.makeLink( s + 'Hand', s + 'Ring1', low , high );
+                simulator.makeLink( s + 'Ring1', s + 'Ring2', low , high );
+                simulator.makeLink( s + 'Ring2', s + 'Ring3', low , high );
+
+                simulator.makeLink( s + 'Hand', s + 'Pinky1', low , high );
+                simulator.makeLink( s + 'Pinky1', s + 'Pinky2', low , high );
+                simulator.makeLink( s + 'Pinky2', s + 'Pinky3', low , high );
+
+            }
+
+
+        },
+
+        makeLink: function ( A, B, low, high ){
+
+            var a = byName[ A ];
+            var b = byName[ B ];
+
+            var s = new THREE.Vector3();
+            var p1 = new THREE.Vector3();
+            var p2 = new THREE.Vector3();
+            var q = new THREE.Quaternion();
+            var q1 = new THREE.Quaternion();
+            var q2 = new THREE.Quaternion();
+
+            var mtx = new THREE.Matrix4();
+            var m = new THREE.Matrix4();
+            var m2 = new THREE.Matrix4();
+            var e = new THREE.Euler();
+
+            mtx.copy( b.userData.decalinv ).decompose( p2, q2, s );
+            mtx.copy( a.userData.decalinv ).decompose( p1, q1, s );
+
+            b.updateMatrixWorld( true );
+            a.updateMatrixWorld( true );
+
+            //mtx.copy( b.userData.decalinv ).multiply( a.matrixWorld );
+            //m.multiplyMatrices( mtx, m2.getInverse( a.matrixWorld ) );
+            //m.decompose( p1, q1, s );
+            //mtx.multiply( m.getInverse( a.matrixWorld ) ).decompose( p1, q1, s );
+
+
+            p1 = b.localToWorld( p2.clone() )
+            p1 = a.worldToLocal( p1 );
+
+            if( A==="hip" && B==="rThigh" ) q1.multiply( q.setFromEuler( e.set( 180*torad,180*torad,0 ) ) );
+            if( A==="hip" && B==="lThigh" ) q1.multiply( q.setFromEuler( e.set( 180*torad,180*torad,0 ) ) );
+
+            if( A==="chest" && B==="rCollar" ) q1.multiply( q.setFromEuler( e.set( 180*torad,0*torad,90*torad ) ) );
+            if( A==="chest" && B==="lCollar" ) q1.multiply( q.setFromEuler( e.set( 180*torad,0*torad,-90*torad ) ) );
+
+            if( A==="rForeArm" && B==="rHand" ) q1.multiply( q.setFromEuler( e.set( 180*torad,0*torad,0*torad ) ) );
+            if( A==="lForeArm" && B==="lHand" ) q1.multiply( q.setFromEuler( e.set( 180*torad,0*torad,0*torad ) ) );
+
+            if( A==="rFoot" && B==="rToes" ){ q2.multiply( q.setFromEuler( e.set( 0*torad,90*torad,0 ) ) ); }
+            if( A==="lFoot" && B==="lToes" ){ q2.multiply( q.setFromEuler( e.set( 0*torad,90*torad,0 ) ) ); }
+            //if(a.userData.r !== b.userData.r) {
+              //  console.log(A,B)
+
+             //   q1.multiply( q.setFromEuler( e.set( 0, 0, a.userData.r*torad ) ).inverse() );
+            //    q2.multiply( q.setFromEuler( e.set( 0, 0, b.userData.r*torad ) ).inverse() );
+            //}
+
+            //p1 = p2.clone().applyMatrix4( b.matrixWorld );
+            //p1.applyMatrix4( m.getInverse( a.matrixWorld ) );
+
+          
+            simulator.testPoint( a, p1, q1, 0xFFFF00 );
+            simulator.testPoint( b, p2, q2, 0x00FFFF );
+
+            //physics.sendTmp( 'add', simulator.link( A, B, p1.toArray(), p2.toArray(), q1.toArray(), q2.toArray(), low, high )  );
+            physics.send( 'add', simulator.link( A, B, p1.toArray(), p2.toArray(), q1.toArray(), q2.toArray(), low, high )  );
+
+        },
+
+        testPoint: function ( mesh, p, q, color ){
+
+            var m = new THREE.Mesh( new THREE.CircleBufferGeometry( 0.25, 5 ), new THREE.MeshBasicMaterial( { color:color }));
+            m.rotation.x = -PI90
+            var a = new Axes(1);
+            var d = new THREE.ArrowHelper( undefined,undefined, 0.5, color, undefined, 0.15 );
+            m.position.copy( p );
+            m.quaternion.copy( q );
+            mesh.add( m );
+            m.add(a)
+            m.add(d)
+
+        },
+
+        link: function ( b1, b2, pos1, pos2, q1, q2, low, high ){
+
+            return {
+
+                //type:'joint',
+                type:'joint_spring_dof',
+                //type:'joint_conetwist',
+                //type:'joint_hinge',
+                //type:'joint_dof',
+                b1:b1, 
+                b2:b2,
+                pos1:pos1,
+                pos2:pos2,
+                quatA: q1 ? q1 : undefined,
+                quatB: q2 ? q2 : undefined,
+
+                useA:true,
+
+                axe1:[1,0,0],
+                axe2:[1,0,0],
+                //limite:[2,20],
+                //spring:[2,0.3,0.1],
+                collision: false,
+
+                
+
+                
+                linLower:[-0.01,-0.01,-0.01],
+                linUpper:[0.01,0.01,0.01],
+                //linLower:[-1,-1,-1],
+                //linUpper:[1,1,1],
+
+                angLower: simulator.vectorad(low),
+                angUpper: simulator.vectorad(high),
+
+               // enableSpring:[0,true],
+               // stiffness:[0, 39.478],
+               // damping:[0, 0.01],
+                
+
+                //springPosition:[0,0,0],
+                //springRotation:[0,1,0],
+
+            }
+
+        },
 
         add: function ( o ) {
 
@@ -653,8 +923,8 @@ var simulator = ( function () {
 
             }
 
-            mat.kinematic.visible = isShow;
-            mat.static.visible = isShow;
+            //mat.kinematic.visible = simulator.isShow;
+            mat.static.visible = simulator.isShow;
 
             o.type = o.type === undefined ? 'box' : o.type;
 
@@ -696,12 +966,7 @@ var simulator = ( function () {
             if(o.angUpper) o.angUpper = simulator.vectorad( o.angUpper );
             if(o.angLower) o.angLower = simulator.vectorad( o.angLower );
 
-            var mesh = null;
-            var material;
-            if( isKinematic ) material = mat.kinematic;
-            else material = o.mass === 0 ? mat.static : mat.move;
-
-            if( o.material !== undefined ) material = o.material;
+            ;
 
             if(o.type.substring(0,5) === 'joint') {
 
@@ -717,31 +982,35 @@ var simulator = ( function () {
 
             }
             
-            if( o.type === 'capsule' ){
+            // mesh
 
-                var g = new THREE.CapsuleBufferGeometry( o.size[0], o.size[1]*0.5 );
-                mesh = new THREE.Mesh( g, material );
-                extraGeo.push( mesh.geometry );
-                isCustomGeometry = true;
+            var mesh = null;
+            var geometry = null;
 
-            } else {
+            var material;
 
-                mesh = new THREE.Mesh( geo[o.type], material );
-                
+            if( isKinematic ) material = mat.kinematic;
+            else material = o.mass === 0 ? mat.static : mat.move;
+
+            if( o.material !== undefined ) material = o.material
+
+            if( o.type === 'capsule' ) geometry = new THREE.CapsuleBufferGeometry( o.size[0], o.size[1]*0.5 );
+            else{ 
+                geometry = geo[o.type].clone();
+                geometry.applyMatrix( new THREE.Matrix4().scale( new THREE.Vector3().fromArray( o.size ) ) );
             }
 
-            if( mesh ){
+            extraGeo.push( geometry );
+            mesh = new THREE.Mesh( geometry, material );
 
-                if( !isCustomGeometry ) mesh.scale.fromArray( o.size );
-                mesh.position.fromArray( o.pos );
-                mesh.quaternion.fromArray( o.quat );
+            mesh.position.fromArray( o.pos );
+            mesh.quaternion.fromArray( o.quat );
 
-                if( o.name === undefined ) o.name =  moveType !== 1 ? 'b'+ bodys.length : 'f'+ solids.length;
-                mesh.name = o.name;
+            if( o.name === undefined ) o.name =  moveType !== 1 ? 'b'+ bodys.length : 'f'+ solids.length;
+            mesh.name = o.name;
 
-                physicsGroup.add( mesh );
+            physicsGroup.add( mesh );
                 
-            }
             
             if( o.noPhy === undefined ){
 
@@ -756,7 +1025,8 @@ var simulator = ( function () {
                 }
 
                 // send to physics worker
-                physics.sendTmp( 'add', o );
+                // physics.sendTmp( 'add', o );
+                physics.send( 'add', o );
 
             }
 
@@ -764,7 +1034,7 @@ var simulator = ( function () {
 
                 mesh.castShadow = o.material !== undefined ? true : false;
                 mesh.receiveShadow = o.material !== undefined ? true : false;
-                simulator.byName[ mesh.name ] = mesh;
+                byName[ mesh.name ] = mesh;
                 return mesh;
 
             }

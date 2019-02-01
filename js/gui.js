@@ -14,7 +14,7 @@ var buttons = []
 
 var MENU = [ 'X', 'VIEW','ANIMATION', 'PHYSICS', 'KINEMATICS' ];
 
-var bone, sx, sy, sz, wx, wy, wz;
+//var bone, sx, sy, sz, wx, wy, wz;
 
 //var hb = 14;
 //var hc = '#929292';
@@ -27,6 +27,8 @@ var selectColor = '#db0bfa'
 var over = 'rgba(153,153,153,0.3)'
 var selected = 'rgba(80,80,80,0.3)'
 var out = 'none';
+
+var tmp = {};
 
 
 gui = {
@@ -166,13 +168,11 @@ gui = {
 
         current = 'view';
         var gr0 = ui.add('group', { name:'ENVIRONEMENT', h:30 });
-        gr0.add('button', { name:'river', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
-        gr0.add('button', { name:'studio', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
-        gr0.add('button', { name:'photo', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
-        gr0.add('button', { name:'color', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
-        gr0.add('button', { name:'mit', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
-        gr0.add('button', { name:'street', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
-        gr0.add('button', { name:'night', h:20, p:0 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        var envs = ['river', 'studio', 'photo', 'color', 'mit', 'street', 'night' ];
+        envs.sort();
+
+        for( var i = 0, lng = envs.length; i < lng; i++ ) gr0.add('button', { name:envs[i], h:20, p:0, radius:6 }).onChange( function(v){ loadEnvMap( this.txt )} );
+        
         gr0.open();
     
     },
@@ -184,7 +184,7 @@ gui = {
     	timebarre.setReference( character );
     	timebarre.show();
 
-        ui.add('button', { name:'LOAD BVH', h:30, drag:true, p:0 }).onChange( parseAnimation );
+        ui.add('button', { name:'LOAD BVH', h:30, drag:true, p:0, radius:6 }).onChange( parseAnimation );
         ui.add('slide', { name:'timescale', min:0.01, max:2, value:1, precision:2, h:30, stype:2, fontColor:selectColor }).onChange( function(v){ character.setTimeScale( v );  } );
 
 
@@ -192,7 +192,7 @@ gui = {
 
         for(var m in animations){
 
-            gr0.add('button', { name:m, h:30, p:0 }).onChange( function (){character.play( this.txt );} );
+            gr0.add('button', { name:m, h:20, p:0, radius:6 }).onChange( function (){character.play( this.txt );} );
 
         }
 
@@ -219,14 +219,20 @@ gui = {
 
     	current = 'physics';
 
-        ui.add('button', { name:'START', p:0, h:30 }).onChange( initPhysics );
-        ui.add('button', { name:'RESET', p:0, h:30 }).onChange( physics.reset );
-        ui.add('Bool', { name:'CHARACTER', value:isModel, p:70, inh:16, fontColor:selectColor } ).onChange( showModel );
-        ui.add('Bool', { name:'HELPER', value:isHelper, p:70, inh:16, fontColor:selectColor  } ).onChange( showHelper );
-        ui.add('Bool', { name:'SHOW LIMIT', value:physics.getShow(), p:70, inh:16, fontColor:selectColor } ).onChange( physics.show );
+        ui.add('Bool', { name:'RAGDOLL', value:simulator.isRagdoll, h:30, p:70, inh:20, fontColor:selectColor }).onChange( simulator.ragdoll );
+        ui.add('Bool', { name:'BALLS', value:simulator.isBall, h:30, p:70, inh:20, fontColor:selectColor }).onChange( simulator.ball );
+
+        //ui.add('button', { name:'START', p:0, h:30, radius:6  }).onChange( initPhysics );
+        //ui.add('button', { name:'RESET', p:0, h:30, radius:6 }).onChange( physics.reset );
+
+        var gr1 = ui.add('group', { name:'DISPLAY', h:30 });
+
+        gr1.add('Bool', { name:'CHARACTER', value:isModel, p:70, inh:16, fontColor:selectColor } ).onChange( showModel );
+        gr1.add('Bool', { name:'HELPER', value:isHelper, p:70, inh:16, fontColor:selectColor  } ).onChange( showHelper );
+        gr1.add('Bool', { name:'DEBUG', value:simulator.isShow, p:70, inh:16, fontColor:selectColor } ).onChange( simulator.show );
 
 
-        ui.add('button', { name:'TEST RAGDOLL', p:0, h:30 }).onChange( physicsHack );
+        
 
 
     },
@@ -236,6 +242,7 @@ gui = {
     	current = 'kinematics';
 
     },
+
 
 }
 
@@ -286,12 +293,6 @@ var Timebarre = function( p, sel ){
 
     this.playButton.innerHTML = this.playing ? this.playIcon : this.pauseIcon;
     this.playButton.childNodes[0].childNodes[0].setAttribute('fill', '#000');
-
-
-
-        //this.playButton.addEventListener('mouseover', editor.play_over, false );
-        //this.playButton.addEventListener('mouseout', editor.play_out, false );
-        
 
     var _this = this;
     //window.addEventListener( 'resize', function(e){ _this.resize(e); }, false );

@@ -19,7 +19,12 @@ function Eyes ( option ) {
 	this.target = new THREE.Group();
 	this.inner.add( this.target );
 
-	this.looker = new THREE.Vector3(1,0,0)
+	this.looker = new THREE.Vector3(1,0,0);
+
+	this.bone = null;
+	//this.mtx = new THREE.Matrix4();
+	//this.reference_skeleton = null;
+	
 
 	this.isReady = false;
 	
@@ -28,6 +33,13 @@ function Eyes ( option ) {
 }
 
 Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
+
+	setBone: function ( bone, skeleton ) {
+
+		this.bone = skeleton.bones[ bone.userData.idr ];
+		this.matrixAutoUpdate = false;
+
+	},
 
 	look: function ( v ) {
 
@@ -158,6 +170,25 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 		this.isReady = true;
 
 	},
+
+	updateMatrixWorld: function (force) {
+
+		//var mtx = new THREE.Matrix4();
+
+		//return function updateMatrixWorld( force ) {
+
+
+			if( this.bone ){
+				this.matrix = ( this.bone.userData.isPhysics ? this.bone.userData.phyMtx : this.bone.matrixWorld );
+			}
+            
+
+			THREE.Object3D.prototype.updateMatrixWorld.call( this, force );
+	//	}
+
+		
+
+	}//()
 
 
 });
