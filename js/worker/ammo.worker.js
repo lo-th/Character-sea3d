@@ -15,7 +15,7 @@
 */
 
 var Module = { TOTAL_MEMORY: 256*1024*1024 };
-
+var epsilon = 0.00000001;
 var Ammo, start;
 
 var worldscale = 1;
@@ -1051,11 +1051,12 @@ function addJoint ( o ) {
     // limite min, limite max, softness, bias, relaxation
     if(o.limit){ 
         if(o.type === 'joint_hinge' || o.type === 'joint' ) joint.setLimit( o.limit[0]*torad, o.limit[1]*torad, o.limit[2] || 0.9, o.limit[3] || 0.3, o.limit[4] || 1.0 );
-        else if(o.type === 'joint_conetwist' ) joint.setLimit( o.limit[0]*torad, o.limit[1]*torad, o.limit[2]*torad, o.limit[3] || 0.9, o.limit[4] || 0.3, o.limit[5] || 1.0 );
+        else if(o.type === 'joint_conetwist' ) joint.setLimit( o.limit[0]*torad, o.limit[1]*torad )//, o.limit[2]*torad, o.limit[3] || 0.9, o.limit[4] || 0.3, o.limit[5] || 1.0 );
     }
     if(o.motor) joint.enableAngularMotor( o.motor[0], o.motor[1], o.motor[2] );
 
-
+//if(o.type==='joint_conetwist') console.log(joint)
+    //if(o.type==='joint_hinge') console.log(joint)
     // slider & dof
     if( joint.setLinearLowerLimit ){
         if(o.linLower){ tmpPos.fromArray(o.linLower).multiplyScalar(invScale); joint.setLinearLowerLimit( tmpPos ); }
@@ -1071,10 +1072,10 @@ function addJoint ( o ) {
     if(o.feedback) joint.enableFeedback( o.feedback );
     if(o.param) joint.setParam( o.param[0], o.param[1], o.param[1] );//BT_CONSTRAINT_STOP_CFM, 1.0e-5f, 5 // add some damping
 
-    // spring dof
+    
     //if( o.enableSpring && joint.enableSpring ) joint.enableSpring( o.enableSpring[0], o.enableSpring[1] );//0, true
     //if( o.stiffness && joint.setStiffness ) joint.setStiffness( o.stiffness[0], o.stiffness[1] );//0, 39.478 // period 1 sec for !kG body
-    if(o.damping && joint.setDamping ) joint.setDamping( o.damping[0], o.damping[1] );// 0, 0.01 // add some damping
+   // if(o.damping && joint.setDamping ) joint.setDamping( o.damping[0], o.damping[1] );// 0, 0.01 // add some damping
     // constraint force mixing prevents "locking" on limits
     
 
@@ -1083,37 +1084,41 @@ function addJoint ( o ) {
     if(o.maxMotorImpulse) joint.setMaxMotorImpulse( o.maxMotorImpulse );
     if(o.motorTarget) joint.setMotorTarget( tmpQuat.fromArray( o.motorTarget ) );
 
-    if( joint.enableSpring ){
+    // spring dof
+    // < 3 position 
+    // > 3 rotation
+    if( o.damping && joint.setDamping ){
+        for ( var i = 0; i < 6; i++ ) joint.setDamping( i, o.damping[i] );
+    }
+    if( o.spring && joint.enableSpring ){
+        for ( var i = 0; i < 6; i++ ){
+            joint.enableSpring( i, o.spring[ i ] === 0 ? false : true );
+            joint.setStiffness( i, o.spring[ i ] );
+        }
+    }
+
+   /* if( joint.enableSpring ){
 
 
         if( o.springPosition){
             for ( var i = 0; i < 3; i++ ) {
 
-                if( o.springPosition[ i ] !== 0 ) {
-
-                    joint.enableSpring( i, true );
-                    joint.setStiffness( i, o.springPosition[ i ] );
-
-                }
+                joint.enableSpring( i, o.springPosition[ i ] === 0 ? false : true );
+                joint.setStiffness( i, o.springPosition[ i ] );
 
             }
         }
-   
 
         if(o.springRotation){
             for ( var i = 0; i < 3; i++ ) {
 
-                if( o.springRotation[ i ] !== 0 ) {
-
-                    joint.enableSpring( i + 3, true );
-                    joint.setStiffness( i + 3, o.springRotation[ i ] );
-
-                }
+                joint.enableSpring( i + 3, o.springRotation[ i ] === 0 ? false : true );
+                joint.setStiffness( i + 3, o.springRotation[ i ] );
 
             }
         }
 
-    }
+    }*/
 
     // debug test 
     joint.type = 0;

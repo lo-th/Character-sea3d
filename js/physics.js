@@ -364,6 +364,7 @@ var simulator = ( function () {
 
     var torad = 0.0174532925199432957;
     var PI90 = 1.570796326794896;
+    var epsilon = 0.00000001;
 
     var physicsSkeleton = null;
     var numBall = 100;
@@ -636,7 +637,7 @@ var simulator = ( function () {
                         mtx.multiplyMatrices( parent.matrixWorld, tmpMtx );
                         mtx.decompose( p, q, s );
 
-                        var mass = (size[0]+size[1]+size[2])*0.1;
+                        var mass = (size[0]+size[1]+size[2])//*0.1;
 
                         mesh = simulator.add({
 
@@ -680,6 +681,7 @@ var simulator = ( function () {
             simulator.addLinks();
 
             physicsSkeleton = new PhysicsSkeleton( character, nodes );
+            physicsSkeleton.show( simulator.isShow );
             scene.add( physicsSkeleton );
 
         },
@@ -699,10 +701,10 @@ var simulator = ( function () {
             var low = [-45, -60, -45];
             var high = [45, 60, 45]
 
-            simulator.makeLink(  'hip', 'abdomen',  [-10,-40,-10] , [10,40,10] );
-            simulator.makeLink( 'abdomen', 'chest', low, high );
-            simulator.makeLink( 'chest', 'neck', low, high );
-            simulator.makeLink( 'neck', 'head', low, high );
+            simulator.makeLink(  'hip', 'abdomen',  [-10,-40,-10] , [10,40,10], 'joint_conetwist', [0,0,0], [0,0,0], [ -45, 45 ] );
+            simulator.makeLink( 'abdomen', 'chest', low, high , 'joint_conetwist', [0,0,0], [0,0,0], [ -45, 45 ]);
+            simulator.makeLink( 'chest', 'neck', low, high, 'joint_conetwist', [0,0,0], [0,0,0], [ -45, 45 ] );
+            simulator.makeLink( 'neck', 'head', low, high, 'joint_conetwist', [0,0,0], [0,0,0], [ -45, 45 ] );
 
             for (var i = 0; i<2; i++){
                 
@@ -712,50 +714,52 @@ var simulator = ( function () {
                 high = [45, 60, 45]
 
                 // leg
-                simulator.makeLink( 'hip', s + 'Thigh', [-90,-90,-90] , [90,90,90] );
-                simulator.makeLink( s + 'Thigh', s + 'Shin', [-5,-180,-5] , [5,5,5] );
-                simulator.makeLink( s + 'Shin', s + 'Foot', [-90,-90,-90] , [90,90,90] );
-                simulator.makeLink( s + 'Foot', s + 'Toes', [-90,-90,-90] , [90,90,90] );
+                //simulator.makeLink( 'hip', s + 'Thigh', [-90,-90,-90] , [90,90,90] );
+                simulator.makeLink( 'hip', s + 'Thigh', [-90,-90,-90] , [90,90,90], 'joint_conetwist', [0,0,0], [0,0,0], [ -80, 80 ] );
+                simulator.makeLink( s + 'Thigh', s + 'Shin', [-5,-180,-5] , [5,5,5], 'joint_hinge', [1,0,0], [1,0,0], [ -2, 160 ] );
+                //simulator.makeLink( s + 'Thigh', s + 'Shin', [-5,-140,-5] , [5,5,5] );
+                simulator.makeLink( s + 'Shin', s + 'Foot', [-45,-45,-45] , [45,45,45], 'joint_conetwist', [0,0,0], [0,0,0], [ -45, 45 ] );
+                simulator.makeLink( s + 'Foot', s + 'Toes', [-5,-45,-5] , [5,45,5])///, 'joint_hinge', [1,0,0], [1,0,0], [ -45, 45 ] );
 
                 // arm
-                simulator.makeLink( 'chest', s + 'Collar', [-5,-5,-10] , [5,5,10] );
-                simulator.makeLink( s + 'Collar', s + 'Shldr', low , high );
-                simulator.makeLink( s + 'Shldr' , s + 'ForeArm', [-5,-180,-5] , [5,5,5] );
-                simulator.makeLink( s + 'ForeArm', s + 'Hand', [0,-10,0] , [0,10,0] );
-
-
+                simulator.makeLink( 'chest', s + 'Collar', [-5,-5,-5] , [5,5,5])//, 'joint_conetwist', [0,0,0], [0,0,0], [ -2, 2 ] );
+                simulator.makeLink( s + 'Collar', s + 'Shldr', low , high, 'joint_conetwist', [0,0,0], [0,0,0], [ -160, 160 ] );
+                simulator.makeLink( s + 'Shldr' , s + 'ForeArm', [-5,-180,-5] , [5,5,5], 'joint_hinge', [1,0,0], [1,0,0], [ -2, 160 ] );
+                simulator.makeLink( s + 'ForeArm', s + 'Hand', [0,-10,0] , [0,10,0], 'joint_conetwist', [0,0,0], [0,0,0], [ -45, 45 ] );
 
                 // finger
 
-                low = [-10, -10, -90];
-                high = [10, 10, 90]
+                low = [0, 0, -90];
+                high = [0, 0, 90]
 
-                simulator.makeLink( s + 'Hand', s + 'Thumb1', low , high );
-                simulator.makeLink( s + 'Thumb1', s + 'Thumb2', low , high );
-                simulator.makeLink( s + 'Thumb2', s + 'Thumb3', low , high );
+                var aa = i === 0 ? [ -90, 0 ] : [ 0, 90 ]
 
-                simulator.makeLink( s + 'Hand', s + 'Index1', low , high );
-                simulator.makeLink( s + 'Index1', s + 'Index2', low , high );
-                simulator.makeLink( s + 'Index2', s + 'Index3', low , high );
+                simulator.makeLink( s + 'Hand', s + 'Thumb1', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Thumb1', s + 'Thumb2', low , high, 'joint_hinge', [0,0,1], [1,0,0], aa );
+                simulator.makeLink( s + 'Thumb2', s + 'Thumb3', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
 
-                simulator.makeLink( s + 'Hand', s + 'Mid1', low , high );
-                simulator.makeLink( s + 'Mid1', s + 'Mid2', low , high );
-                simulator.makeLink( s + 'Mid2', s + 'Mid3', low , high );
+                simulator.makeLink( s + 'Hand', s + 'Index1', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Index1', s + 'Index2', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Index2', s + 'Index3', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
 
-                simulator.makeLink( s + 'Hand', s + 'Ring1', low , high );
-                simulator.makeLink( s + 'Ring1', s + 'Ring2', low , high );
-                simulator.makeLink( s + 'Ring2', s + 'Ring3', low , high );
+                simulator.makeLink( s + 'Hand', s + 'Mid1', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Mid1', s + 'Mid2', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Mid2', s + 'Mid3', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
 
-                simulator.makeLink( s + 'Hand', s + 'Pinky1', low , high );
-                simulator.makeLink( s + 'Pinky1', s + 'Pinky2', low , high );
-                simulator.makeLink( s + 'Pinky2', s + 'Pinky3', low , high );
+                simulator.makeLink( s + 'Hand', s + 'Ring1', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Ring1', s + 'Ring2', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Ring2', s + 'Ring3', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+
+                simulator.makeLink( s + 'Hand', s + 'Pinky1', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Pinky1', s + 'Pinky2', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
+                simulator.makeLink( s + 'Pinky2', s + 'Pinky3', low , high, 'joint_hinge', [0,0,1], [0,0,1], aa );
 
             }
 
 
         },
 
-        makeLink: function ( A, B, low, high ){
+        makeLink: function ( A, B, low, high, type, a1, a2, limit ){
 
             var a = byName[ A ];
             var b = byName[ B ];
@@ -808,12 +812,15 @@ var simulator = ( function () {
             //p1 = p2.clone().applyMatrix4( b.matrixWorld );
             //p1.applyMatrix4( m.getInverse( a.matrixWorld ) );
 
+            q1.normalize()
+            q2.normalize()
+
           
             simulator.testPoint( a, p1, q1, 0xFFFF00 );
             simulator.testPoint( b, p2, q2, 0x00FFFF );
 
             //physics.sendTmp( 'add', simulator.link( A, B, p1.toArray(), p2.toArray(), q1.toArray(), q2.toArray(), low, high )  );
-            physics.send( 'add', simulator.link( A, B, p1.toArray(), p2.toArray(), q1.toArray(), q2.toArray(), low, high )  );
+            physics.send( 'add', simulator.link( A, B, p1.toArray(), p2.toArray(), q1.toArray(), q2.toArray(), low, high, type, a1, a2,limit  )  );
 
         },
 
@@ -831,12 +838,25 @@ var simulator = ( function () {
 
         },
 
-        link: function ( b1, b2, pos1, pos2, q1, q2, low, high ){
+        link: function ( b1, b2, pos1, pos2, q1, q2, low, high, type, a1, a2, limit ){
+
+            var rlow = simulator.vectorad( low );
+            var rhigh = simulator.vectorad( high );
+
+            if( rlow[0] === 0 ) rlow[0] = -epsilon;
+            if( rlow[1] === 0 ) rlow[1] = -epsilon;
+            if( rlow[2] === 0 ) rlow[2] = -epsilon;
+
+            if( rhigh[0] === 0 ) rhigh[0] = epsilon;
+            if( rhigh[1] === 0 ) rhigh[1] = epsilon;
+            if( rhigh[2] === 0 ) rhigh[2] = epsilon;
+
+            //console.log(rlow,rhigh )
 
             return {
 
                 //type:'joint',
-                type:'joint_spring_dof',
+                type: type || 'joint_spring_dof',
                 //type:'joint_conetwist',
                 //type:'joint_hinge',
                 //type:'joint_dof',
@@ -849,22 +869,25 @@ var simulator = ( function () {
 
                 useA:true,
 
-                axe1:[1,0,0],
-                axe2:[1,0,0],
-                //limite:[2,20],
+                axe1: a1 || [1,0,0],
+                axe2: a2 || [1,0,0],
+                limit: limit || [ 45, 45, 0.9, 0.3, 1 ],
                 //spring:[2,0.3,0.1],
                 collision: false,
 
                 
 
                 
-                linLower:[-0.01,-0.01,-0.01],
-                linUpper:[0.01,0.01,0.01],
+                linLower:[-epsilon,-epsilon,-epsilon],
+                linUpper:[epsilon,epsilon,epsilon],
                 //linLower:[-1,-1,-1],
                 //linUpper:[1,1,1],
 
-                angLower: simulator.vectorad(low),
-                angUpper: simulator.vectorad(high),
+                angLower: rlow,
+                angUpper: rhigh,
+
+                //spring:[0,0,0,  0.5,0.5,0.5],
+                //damping:[0,0,0,  0.01,0.01,0.01],
 
                // enableSpring:[0,true],
                // stiffness:[0, 39.478],

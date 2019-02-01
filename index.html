@@ -83,6 +83,8 @@ var helper = null;
 var isHelper = false;
 var isModel = true;
 
+var debug = false;
+
 init();
 animate( 0 );
 addGroundAndLight();
@@ -303,6 +305,12 @@ function loadModel () {
 		meshs.Head.material = materials.head;
 		meshs.Head_plus.material = materials.head_plus;
 
+		meshs.Body.frustumCulled = false;
+		meshs.Sling.frustumCulled = false;
+		meshs.Shoes.frustumCulled = false;
+		meshs.Head.frustumCulled = false;
+		meshs.Head_plus.frustumCulled = false;
+
 		// morphs
 		morphs = { 'anger':0, 'disgust':0, 'fear':0, 'sad':0, 'smile_closed':0, 'smile_open':0  };
 		applyMorphs();
@@ -311,12 +319,27 @@ function loadModel () {
 		// define main character
 		character = meshs.Armature;
 
-
+        
+        initPhysics();
 		initBVH();
 		addEyes();
 		loadEnvMap( envName );
 
 		ground.visible = true;
+
+
+		//  test
+
+		
+
+		if(debug){
+			showModel( false )
+		    simulator.isShow = true;
+		}
+		
+		//character.setTimeScale( 0.5 );
+
+		gui.select(3);
 
 	};
 
@@ -373,17 +396,6 @@ function initBVH () {
 	bvhLoader.load( "./assets/bvh/idle.bvh", addAnimation );
 	bvhLoader.load( "./assets/bvh/ClubDance.bvh", addAnimation );
 
-
-	//  test
-
-	initPhysics();
-	//showModel(false)
-	//simulator.show(true);
-	//character.setTimeScale( 0.5 );
-
-	gui.select(3);
-
-
 }
 
 function parseAnimation( data, name, type ) {
@@ -402,7 +414,7 @@ function addAnimation ( result ) {
 
     bvhLoader.applyToModel( character, result, seq, pos );
 
-    if(result.clip.name!== 'idle' && result.clip.name!== 'ClubDance') character.play( result.clip.name );
+    if(result.clip.name!== 'idle' && result.clip.name!== 'ClubDance' && !debug ) character.play( result.clip.name );
 
     animations[result.clip.name] = 1;
 
@@ -454,12 +466,10 @@ function addEyes () {
 	eyes = new Eyes();
 	eyes.setBone( 'head', character.skeleton );
 	scene.add( eyes );
-    //attachToBone( eyes, meshs.Body, 'head' );
-	//attachToBone( eyes, character, 'head' );
 
 }
 
-function attachToBone ( mesh, parent, boneName ){
+/*function attachToBone ( mesh, parent, boneName ){
 
 	var bones = parent.skeleton.bones, b;
 	for( var i = 0, lng = bones.length; i < lng; i++ ){
@@ -471,7 +481,7 @@ function attachToBone ( mesh, parent, boneName ){
 		}
 	}
 
-}
+}*/
 
 // _____________________________ environement
 
