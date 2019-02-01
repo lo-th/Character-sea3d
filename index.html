@@ -452,7 +452,7 @@ function applyAnimationsWeight () {
 function addEyes () {
 
 	eyes = new Eyes();
-	eyes.setBone( meshs.Head.skeleton.getBoneByName('head'), character.skeleton );
+	eyes.setBone( 'head', character.skeleton );
 	scene.add( eyes );
     //attachToBone( eyes, meshs.Body, 'head' );
 	//attachToBone( eyes, character, 'head' );
@@ -465,9 +465,6 @@ function attachToBone ( mesh, parent, boneName ){
 	for( var i = 0, lng = bones.length; i < lng; i++ ){
 		b = bones[i];
 		if( b.name === boneName ){
-			//b.add( mesh );
-			mesh.link = b;
-
 			mesh.matrix = b.matrixWorld;
 			mesh.matrixAutoUpdate = false;
 

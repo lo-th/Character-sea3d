@@ -12,14 +12,12 @@ function PhysicsSkeleton( object, nodes ) {
 	this.upMtx = [];
 	this.isShow = false;
 
-	
-
 	var bone;
 	for ( var i = 0, il = this.nodes.length; i < il; i ++ ) {
 		//bone = this.bones[ this.nodes[i].userData.boneId ];//
 		bone = this.nodes[i].userData.bone;
 		bone.userData.isPhysics = true;
-		bone.userData.phyMtx = new THREE.Matrix4();
+		//bone.userData.phyMtx = new THREE.Matrix4();
 	}
 
 	THREE.Object3D.call( this );
@@ -53,7 +51,7 @@ PhysicsSkeleton.prototype.clear = function () {
 	//for( var i=0, lng = this.nodes.length; i<lng; i++ ){
 		bone = this.nodes[i].userData.bone;
         bone.userData.isPhysics = false;
-        bone.userData.phyMtx = new THREE.Matrix4();
+        //bone.userData.phyMtx = new THREE.Matrix4();
     }
 
 	this.nodes = [];
@@ -96,7 +94,7 @@ PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 				mtx.multiplyMatrices( bone.matrixWorld, node.userData.decal ).decompose( p, q, s );
 				upMtx.push([ node.name, p.toArray(), q.toArray() ]);
 
-				bone.userData.phyMtx = bone.matrixWorld.clone();
+				bone.userData.phyMtx.copy( bone.matrixWorld );
 
 			} else {
 
@@ -117,7 +115,7 @@ PhysicsSkeleton.prototype.updateMatrixWorld = function () {
 
                     }
 
-                bone.userData.phyMtx = mtx.clone();
+                bone.userData.phyMtx.copy( mtx );
 
 			}
 

@@ -497,6 +497,8 @@ var simulator = ( function () {
 
             }
 
+            eyes.ragdoll( simulator.isRagdoll )
+
             physics.send( 'setOption', r );
             
         },
@@ -660,29 +662,11 @@ var simulator = ( function () {
 
                         mesh.userData.isKinematic = kinematic;
                         mesh.userData.decal = tmpMtx.clone();
-                        mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );//tmpMtxInv.clone();
+                        mesh.userData.decalinv = new THREE.Matrix4().getInverse( tmpMtx );
                         //mesh.userData.boneId = boneId;
                         mesh.userData.bone = parent;
-                        mesh.userData.r = r;
-                        mesh.userData.d = dist;
-
-                        //mesh.userData.matrix = [ n, p.toArray(), q.toArray() ];
-                        //mesh.userData.dist = dist;
-
-                        //mesh.userData.top = bone.parent.position.clone();
-                        //mesh.userData.quat = bone.parent.quaternion.clone().multiply(revQ).normalize();
-
-                        
-                        //mesh.userData.parentName = parentName;
-
-                        //bone.parent.userData.mesh = mesh;
-                        //bone.parent.userData.isPhysics = true;
-                        //bone.parent.userData.isKinematic = kinematic;
-
-                        //bone.userData.mesh = mesh;
-                        //bone.userData.isPhysics = true;
-                        //bone.userData.isKinematic = kinematic;
-                        
+                        //mesh.userData.r = r;
+                        //mesh.userData.d = dist;
 
                         nodes.push( mesh );
 

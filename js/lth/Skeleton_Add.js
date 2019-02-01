@@ -26,7 +26,10 @@ THREE.Skeleton.prototype.setReference = function ( ref ) {
 
         for ( var j = 0, jl = ref.bones.length; j < jl; j ++ ) {
 
-            ref.bones[j].userData.phyMatrix = null;
+            if( !ref.bones[j].userData.phyMtx ){ 
+                ref.bones[j].userData.isPhysics = false;
+                ref.bones[j].userData.phyMtx = new THREE.Matrix4();
+            }
 
 
             if( name === ref.bones[j].name ){ 

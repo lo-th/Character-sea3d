@@ -34,11 +34,18 @@ function Eyes ( option ) {
 
 Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
-	setBone: function ( bone, skeleton ) {
+	setBone: function ( name, skeleton ) {
 
-		this.bone = skeleton.bones[ bone.userData.idr ];
+		this.bone = skeleton.getBoneByName( name )//.bones[ bone.userData.idr ];
+		this.matrix = this.bone.matrixWorld;//this.bone.userData.phyMtx;
 		this.matrixAutoUpdate = false;
 
+	},
+
+	ragdoll: function ( b ) {
+
+		if(b)this.matrix = this.bone.userData.phyMtx;
+		else this.matrix = this.bone.matrixWorld;
 	},
 
 	look: function ( v ) {
@@ -171,7 +178,7 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 	},
 
-	updateMatrixWorld: function (force) {
+	/*updateMatrixWorld: function (force) {
 
 		//var mtx = new THREE.Matrix4();
 
@@ -188,7 +195,7 @@ Eyes.prototype = Object.assign( Object.create( THREE.Object3D.prototype ),{
 
 		
 
-	}//()
+	}//()*/
 
 
 });
